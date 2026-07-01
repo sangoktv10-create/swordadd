@@ -521,9 +521,9 @@
         <h1 class="select-title">검강화하기</h1>
         <p class="select-sub">난이도를 고르면 게임 화면으로 넘어가요 ⚔️<br>시작 돈: <b>이지 2,500,000원 / 노말 2,000,000원 / 하드 1,000,000원</b></p>
         <div class="difficulty-grid">
-          <button class="difficulty-btn easy" onclick="startGame('easy')">이지<small>시작 돈 250만원<br>판매가 100%</small></button>
-          <button class="difficulty-btn normal" onclick="startGame('normal')">노말<small>시작 돈 200만원<br>판매가 80%</small></button>
-          <button class="difficulty-btn hard" onclick="startGame('hard')">하드<small>시작 돈 100만원<br>판매가 60%</small></button>
+          <button class="difficulty-btn easy" onclick="startGame('easy')">이지<small>시작 돈 250만원<br>20강쯤 본전</small></button>
+          <button class="difficulty-btn normal" onclick="startGame('normal')">노말<small>시작 돈 200만원<br>20강쯤 본전</small></button>
+          <button class="difficulty-btn hard" onclick="startGame('hard')">하드<small>시작 돈 100만원<br>20강쯤 본전</small></button>
         </div>
       </div>
     </div>
@@ -609,7 +609,7 @@
       normal: 2000000,
       hard: 1000000
     };
-    const STORAGE_PREFIX = "swordUpgradeV6_30ShopDestroyGuard_";
+    const STORAGE_PREFIX = "swordUpgradeV8_highCostAfter20_";
 
     const swordNames = [
       "강화 전 검",
@@ -759,19 +759,46 @@
     function getCost() {
       if (game.level >= MAX_LEVEL) return 0;
       const config = diffConfig[currentDifficulty];
-      const baseCost = 500 + game.level * 1200 + game.level * game.level * 60;
+      const baseCost = getBaseUpgradeCost(game.level);
       return Math.floor(baseCost * config.costMul);
+    }
+
+    function getBaseUpgradeCost(level) {
+      // level은 현재 강화 단계입니다. 예: level 20이면 21강 도전 비용입니다.
+      // 21강 도전부터는 비용이 크게 오르게 설정했습니다.
+      // 노말 기준: 20→21강 1억 2천만 / 21→22강 2억 4천만 / 22→23강 3억 6천만 ...
+      if (level >= 20) {
+        return 120000000 * (level - 19);
+      }
+      return 500 + level * 1200 + level * level * 60;
+    }
+
+    function getTotalUpgradeCostToLevel(level) {
+      const config = diffConfig[currentDifficulty];
+      let total = 0;
+      for (let i = 0; i < level; i++) {
+        total += getBaseUpgradeCost(i) * config.costMul;
+      }
+      return total;
     }
 
     function getSellPrice() {
       if (game.level <= 0) return 0;
-      const config = diffConfig[currentDifficulty];
-
-      // 강화 단계가 높아질수록 판매 가격이 점점 더 크게 올라가도록 설정
-      // 1강은 낮게, 20~30강부터는 가격 상승폭이 확 커집니다.
       const level = game.level;
-      const basePrice = level * 5000 + level * level * 1800 + level * level * level * 80;
-      return Math.floor(basePrice * config.sellMul);
+      const totalCost = getTotalUpgradeCostToLevel(level);
+
+      // 판매가 밸런스:
+      // 강화 실패를 제외하고, 현재 난이도의 누적 강화비용 기준으로 20강 근처에서 본전이 되도록 조정합니다.
+      // 20강 전에는 손해, 20강부터는 거의 본전, 21강 이후부터는 조금씩 이득이 납니다.
+      let returnRate;
+      if (level <= 20) {
+        returnRate = 0.35 + (level / 20) * 0.65;
+      } else {
+        const overLevel = level - 20;
+        returnRate = 1 + overLevel * 0.07;
+      }
+
+      return Math.floor(totalCost * returnRate);
     }
 
     function getGuardCost() {
