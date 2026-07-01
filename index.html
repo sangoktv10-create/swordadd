@@ -521,9 +521,9 @@
         <h1 class="select-title">검강화하기</h1>
         <p class="select-sub">난이도를 고르면 게임 화면으로 넘어가요 ⚔️<br>시작 돈: <b>이지 2,500,000원 / 노말 2,000,000원 / 하드 1,000,000원</b></p>
         <div class="difficulty-grid">
-          <button class="difficulty-btn easy" onclick="startGame('easy')">이지<small>시작 돈 250만원<br>성공률 높음</small></button>
-          <button class="difficulty-btn normal" onclick="startGame('normal')">노말<small>시작 돈 200만원<br>기본 밸런스</small></button>
-          <button class="difficulty-btn hard" onclick="startGame('hard')">하드<small>시작 돈 100만원<br>성공률 낮음</small></button>
+          <button class="difficulty-btn easy" onclick="startGame('easy')">이지<small>시작 돈 250만원<br>판매가 100%</small></button>
+          <button class="difficulty-btn normal" onclick="startGame('normal')">노말<small>시작 돈 200만원<br>판매가 80%</small></button>
+          <button class="difficulty-btn hard" onclick="startGame('hard')">하드<small>시작 돈 100만원<br>판매가 60%</small></button>
         </div>
       </div>
     </div>
@@ -590,14 +590,14 @@
             <div class="item-icon">🛡️</div>
             <div class="item-info">
               <h2>파괴방지권</h2>
-              <p>강화 실패로 검이 하락할 때 자동으로 1장 사용되어 현재 강화 단계를 지켜줍니다.</p>
+              <p>강화 실패로 검이 0강 초기화될 때 자동으로 1장 사용되어 현재 강화 단계를 지켜줍니다.</p>
               <p>가격: <b id="guardCostText">0원</b></p>
             </div>
             <button class="buy-btn" onclick="buyGuard()">구매</button>
           </div>
         </div>
 
-        <div id="shopLogBox" class="log-box notice">파괴방지권은 실패 시 강화 하락을 막아줍니다.</div>
+        <div id="shopLogBox" class="log-box notice">파괴방지권은 실패 시 0강 초기화를 막아줍니다.</div>
       </div>
     </div>
   </section>
@@ -680,9 +680,11 @@
     ];
 
     const diffConfig = {
-      easy: { label: "이지", rateBonus: 10, costMul: 0.75, sellMul: 0.9, downLevel: 18 },
-      normal: { label: "노말", rateBonus: 0, costMul: 1, sellMul: 1, downLevel: 12 },
-      hard: { label: "하드", rateBonus: -10, costMul: 1.2, sellMul: 1.25, downLevel: 8 }
+      // 난이도가 어려워질수록 판매 가격이 줄어듭니다.
+      // 이지 100% / 노말 80% / 하드 60%
+      easy: { label: "이지", rateBonus: 10, costMul: 0.75, sellMul: 1.0, downLevel: 18 },
+      normal: { label: "노말", rateBonus: 0, costMul: 1, sellMul: 0.8, downLevel: 12 },
+      hard: { label: "하드", rateBonus: -10, costMul: 1.2, sellMul: 0.6, downLevel: 8 }
     };
 
     let currentDifficulty = "normal";
@@ -764,7 +766,11 @@
     function getSellPrice() {
       if (game.level <= 0) return 0;
       const config = diffConfig[currentDifficulty];
-      const basePrice = game.level * game.level * 2500 + game.level * 1500;
+
+      // 강화 단계가 높아질수록 판매 가격이 점점 더 크게 올라가도록 설정
+      // 1강은 낮게, 20~30강부터는 가격 상승폭이 확 커집니다.
+      const level = game.level;
+      const basePrice = level * 5000 + level * level * 1800 + level * level * level * 80;
       return Math.floor(basePrice * config.sellMul);
     }
 
@@ -792,7 +798,7 @@
       document.getElementById("gameScreen").classList.remove("active");
       document.getElementById("shopScreen").classList.add("active");
       updateShopUI();
-      setShopLog("파괴방지권은 실패 시 강화 하락을 막아줍니다.", "notice");
+      setShopLog("파괴방지권은 실패 시 0강 초기화를 막아줍니다.", "notice");
     }
 
     function closeShop() {
@@ -952,17 +958,14 @@
         setLog(`강화 성공! +${game.level} ${swordNames[game.level]} 달성 ⚔️`, "success");
         animateSword(true);
       } else {
-        const downStart = diffConfig[currentDifficulty].downLevel;
-        if (game.level >= downStart) {
-          if (game.guards > 0) {
-            game.guards -= 1;
-            setLog("강화 실패! 파괴방지권 1장을 사용해서 강화 단계가 유지됐습니다.", "fail");
-          } else {
-            game.level -= 1;
-            setLog(`강화 실패... +${game.level} ${swordNames[game.level]}로 하락했습니다.`, "fail");
-          }
+        if (game.guards > 0) {
+          game.guards -= 1;
+          setLog("강화 실패! 파괴방지권 1장을 사용해서 0강 초기화를 막았습니다.", "fail");
         } else {
-          setLog("강화 실패... 하지만 강화 단계는 유지됐습니다.", "fail");
+          const beforeName = swordNames[game.level];
+          const beforeLevel = game.level;
+          game.level = 0;
+          setLog(`강화 실패... +${beforeLevel} ${beforeName}이(가) 파괴되어 0강으로 완전히 초기화됐습니다.`, "fail");
         }
         animateSword(false);
       }
