@@ -285,6 +285,7 @@
     .sub-btn.gold { background: #fff3b5; }
     .sub-btn.blue { background: #dbeafe; }
     .sub-btn.green { background: #dcfce7; }
+    .sub-btn.purple { background: #ede9fe; }
     .sub-btn:disabled { opacity: .55; cursor: not-allowed; }
 
     .top-bar .shop-link { width: auto; padding: 10px 15px; font-size: clamp(15px, 3.4vw, 20px); }
@@ -365,6 +366,71 @@
       border-color: #d60000;
       background: #fff0f0;
       color: #d60000;
+    }
+
+    .saved-panel {
+      margin-top: 16px;
+    }
+
+    .saved-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      max-height: 240px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .saved-card {
+      border: 2px solid #111;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 10px;
+      font-weight: 900;
+      box-shadow: 3px 3px 0 rgba(0,0,0,.10);
+    }
+
+    .saved-card strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .saved-card span {
+      display: block;
+      font-size: 13px;
+      opacity: .85;
+      margin-bottom: 8px;
+    }
+
+    .saved-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .mini-btn {
+      border: 2px solid #111;
+      border-radius: 10px;
+      padding: 8px 6px;
+      font-size: 13px;
+      font-weight: 1000;
+      color: #111;
+      background: white;
+    }
+
+    .mini-btn.equip { background: #dcfce7; }
+    .mini-btn.sell { background: #fff3b5; }
+
+    .empty-saved {
+      grid-column: 1 / -1;
+      border: 2px dashed #aaa;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      font-weight: 900;
+      color: #555;
+      background: #fafafa;
     }
 
 
@@ -487,6 +553,30 @@
       white-space: nowrap;
     }
 
+
+
+    .buy-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      min-width: 280px;
+    }
+
+    .buy-options .buy-btn {
+      min-width: 0;
+      padding: 12px 10px;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .buy-options .buy-btn span {
+      display: block;
+      font-size: 12px;
+      font-weight: 900;
+      opacity: .78;
+      margin-top: 2px;
+    }
+
     .buy-btn:active {
       transform: translateY(5px);
       box-shadow: 0 1px 0 #111;
@@ -497,6 +587,7 @@
       .shop-item-card { grid-template-columns: 1fr; text-align: center; }
       .item-icon { margin: 0 auto; }
       .buy-btn { width: 100%; }
+      .buy-options { width: 100%; min-width: 0; grid-template-columns: 1fr 1fr; }
     }
 
     @keyframes shake {
@@ -532,6 +623,7 @@
       }
       .right-info .stat-box { grid-column: 1 / -1; }
       .sword-list { grid-template-columns: 1fr; }
+      .saved-list { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -564,6 +656,7 @@
           <div class="stat-box">판매가격:<br><span id="sellText">0원</span></div>
           <div class="stat-box small">난이도: <span id="difficultyText">노말</span></div>
           <div class="stat-box small">파괴방지권: <span id="guardText">0</span>장</div>
+          <div class="stat-box small">저장된 검: <span id="savedCountText">0</span>개</div>
           <div class="stat-box small">패턴 분석:<br><span id="patternText">0/0</span>
             <div class="pattern-meter"><div id="patternFill" class="pattern-fill"></div></div>
             <span id="patternReadyText">대기중</span>
@@ -582,6 +675,7 @@
         <section class="right-info">
           <button class="upgrade-circle" onclick="upgradeSword()">강화</button>
           <button id="grindBtn" class="sub-btn green" onclick="grindPattern()">패턴 연마하기</button>
+          <button class="sub-btn purple" onclick="saveCurrentSword()">검 저장하기</button>
           <button class="sub-btn gold" onclick="sellSword()">검 판매하기</button>
           <button class="sub-btn blue" onclick="openShop()">상점가기</button>
           <button class="sub-btn danger" onclick="resetCurrent()">현재 난이도 초기화</button>
@@ -594,6 +688,11 @@
       <section class="list-panel">
         <div class="list-title">⚔️ 강화 단계 목록</div>
         <div id="swordList" class="sword-list"></div>
+      </section>
+
+      <section class="list-panel saved-panel">
+        <div class="list-title">📦 저장한 검 보관함</div>
+        <div id="savedList" class="saved-list"></div>
       </section>
     </div>
   </section>
@@ -617,14 +716,19 @@
             <div class="item-icon">🛡️</div>
             <div class="item-info">
               <h2>파괴방지권</h2>
-              <p>강화 실패로 검이 0강 초기화될 때 자동으로 1장 사용되어 현재 강화 단계를 지켜줍니다.</p>
-              <p>가격: <b id="guardCostText">0원</b></p>
+              <p>강화 실패 시 10장을 사용해야 검의 0강 초기화를 막을 수 있습니다.</p>
+              <p>실패하면 바로 사용 확인창이 뜨고, 취소하면 검이 0강으로 초기화됩니다.</p>
             </div>
-            <button class="buy-btn" onclick="buyGuard()">구매</button>
+            <div class="buy-options">
+              <button class="buy-btn" onclick="buyGuard(1)">1장<span>10,000원</span></button>
+              <button class="buy-btn" onclick="buyGuard(10)">10장<span>100,000원</span></button>
+              <button class="buy-btn" onclick="buyGuard(100)">100장<span>1,000,000원</span></button>
+              <button class="buy-btn" onclick="buyGuard(500)">500장<span>5,000,000원</span></button>
+            </div>
           </div>
         </div>
 
-        <div id="shopLogBox" class="log-box notice">파괴방지권은 실패 시 0강 초기화를 막아줍니다.</div>
+        <div id="shopLogBox" class="log-box notice">파괴방지권은 실패 시 10장 단위로 사용해서 0강 초기화를 막습니다.</div>
       </div>
     </div>
   </section>
@@ -724,7 +828,8 @@
         money: getStartMoney(),
         guards: 0,
         best: 0,
-        patterns: {}
+        patterns: {},
+        savedSwords: []
       };
     }
 
@@ -750,6 +855,22 @@
         }
       }
       return result;
+    }
+
+    function sanitizeSavedSwords(savedSwords) {
+      if (!Array.isArray(savedSwords)) return [];
+      return savedSwords
+        .map((item) => {
+          const level = Math.floor(Number(item?.level));
+          if (!Number.isFinite(level) || level <= 0 || level > MAX_LEVEL) return null;
+          return {
+            level,
+            name: swordNames[level],
+            savedAt: Number.isFinite(item?.savedAt) ? item.savedAt : Date.now()
+          };
+        })
+        .filter(Boolean)
+        .slice(0, 50);
     }
 
     function getTargetLevel() {
@@ -820,7 +941,8 @@
           money: Number.isFinite(parsed.money) ? parsed.money : getStartMoney(),
           guards: Number.isFinite(parsed.guards) ? parsed.guards : 0,
           best: Number.isFinite(parsed.best) ? parsed.best : 0,
-          patterns: sanitizePatterns(parsed.patterns)
+          patterns: sanitizePatterns(parsed.patterns),
+          savedSwords: sanitizeSavedSwords(parsed.savedSwords)
         };
       } catch {
         game = makeNewGame();
@@ -873,9 +995,8 @@
       return total;
     }
 
-    function getSellPrice() {
-      if (game.level <= 0) return 0;
-      const level = game.level;
+    function getSellPriceForLevel(level) {
+      if (level <= 0) return 0;
       const totalCost = getTotalUpgradeCostToLevel(level);
 
       // 판매가 밸런스:
@@ -892,8 +1013,18 @@
       return Math.floor(totalCost * returnRate);
     }
 
-    function getGuardCost() {
-      return Math.floor((120000 + game.level * 6000) * diffConfig[currentDifficulty].costMul);
+    function getSellPrice() {
+      return getSellPriceForLevel(game.level);
+    }
+
+    function getGuardPrice(amount) {
+      const prices = {
+        1: 10000,
+        10: 100000,
+        100: 1000000,
+        500: 5000000
+      };
+      return prices[amount] ?? 0;
     }
 
     function startGame(diff) {
@@ -916,7 +1047,7 @@
       document.getElementById("gameScreen").classList.remove("active");
       document.getElementById("shopScreen").classList.add("active");
       updateShopUI();
-      setShopLog("파괴방지권은 실패 시 0강 초기화를 막아줍니다.", "notice");
+      setShopLog("파괴방지권은 실패 시 10장 단위로 사용해서 0강 초기화를 막습니다.", "notice");
     }
 
     function closeShop() {
@@ -928,7 +1059,6 @@
     function updateShopUI() {
       document.getElementById("shopMoneyText").textContent = formatWon(game.money);
       document.getElementById("shopGuardText").textContent = game.guards;
-      document.getElementById("guardCostText").textContent = formatWon(getGuardCost());
     }
 
     function renderSword(level) {
@@ -1007,6 +1137,52 @@
       }
     }
 
+    function updateSavedList() {
+      const list = document.getElementById("savedList");
+      if (!list) return;
+      if (!Array.isArray(game.savedSwords)) game.savedSwords = [];
+      list.innerHTML = "";
+
+      if (game.savedSwords.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-saved";
+        empty.textContent = "아직 저장한 검이 없습니다. 강화 중인 검을 저장하면 여기에 보관돼요.";
+        list.appendChild(empty);
+        return;
+      }
+
+      game.savedSwords.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "saved-card";
+
+        const title = document.createElement("strong");
+        title.textContent = `+${item.level} ${swordNames[item.level]}`;
+
+        const price = document.createElement("span");
+        price.textContent = `판매가: ${formatWon(getSellPriceForLevel(item.level))}`;
+
+        const actions = document.createElement("div");
+        actions.className = "saved-actions";
+
+        const equipBtn = document.createElement("button");
+        equipBtn.className = "mini-btn equip";
+        equipBtn.textContent = "꺼내기";
+        equipBtn.onclick = () => equipSavedSword(index);
+
+        const sellBtn = document.createElement("button");
+        sellBtn.className = "mini-btn sell";
+        sellBtn.textContent = "판매";
+        sellBtn.onclick = () => sellSavedSword(index);
+
+        actions.appendChild(equipBtn);
+        actions.appendChild(sellBtn);
+        card.appendChild(title);
+        card.appendChild(price);
+        card.appendChild(actions);
+        list.appendChild(card);
+      });
+    }
+
     function updateUI() {
       const level = game.level;
       game.best = Math.max(game.best, level);
@@ -1015,6 +1191,7 @@
       document.getElementById("sellText").textContent = formatWon(getSellPrice());
       document.getElementById("difficultyText").textContent = diffConfig[currentDifficulty].label;
       document.getElementById("guardText").textContent = game.guards;
+      document.getElementById("savedCountText").textContent = Array.isArray(game.savedSwords) ? game.savedSwords.length : 0;
       document.getElementById("levelText").textContent = `+${level}`;
       document.getElementById("nameText").textContent = swordNames[level];
       document.getElementById("rateText").textContent = level >= MAX_LEVEL ? "MAX" : getRate();
@@ -1054,6 +1231,7 @@
       }
 
       updateSwordList();
+      updateSavedList();
       if (document.getElementById("shopScreen").classList.contains("active")) updateShopUI();
       saveGame();
     }
@@ -1129,14 +1307,23 @@
             : ` ${targetLevel}강 패턴 +2 (${progress}/${need}).`;
         }
 
-        if (game.guards > 0) {
-          game.guards -= 1;
-          setLog(`강화 실패! 파괴방지권 1장을 사용해서 0강 초기화를 막았습니다.${patternMsg}`, "fail");
+        if (game.guards >= 10) {
+          const useGuard = confirm(`강화 실패! 파괴방지권 10장을 사용하시겠습니까?\n사용하면 현재 강화 단계가 유지되고, 취소하면 검이 0강으로 초기화됩니다.`);
+          if (useGuard) {
+            game.guards -= 10;
+            setLog(`강화 실패! 파괴방지권 10장을 사용해서 0강 초기화를 막았습니다.${patternMsg}`, "fail");
+          } else {
+            const beforeName = swordNames[game.level];
+            const beforeLevel = game.level;
+            game.level = 0;
+            setLog(`파괴방지권 사용을 취소했습니다. +${beforeLevel} ${beforeName}이(가) 0강으로 초기화됐습니다.${patternMsg}`, "fail");
+          }
         } else {
           const beforeName = swordNames[game.level];
           const beforeLevel = game.level;
           game.level = 0;
-          setLog(`강화 실패... +${beforeLevel} ${beforeName}이(가) 파괴되어 0강으로 초기화됐습니다.${patternMsg}`, "fail");
+          const shortage = 10 - game.guards;
+          setLog(`강화 실패... 파괴방지권은 10장부터 사용할 수 있습니다. ${shortage}장이 부족해서 +${beforeLevel} ${beforeName}이(가) 0강으로 초기화됐습니다.${patternMsg}`, "fail");
         }
         animateSword(false);
       }
@@ -1180,6 +1367,70 @@
       updateUI();
     }
 
+    function saveCurrentSword() {
+      if (game.level <= 0) {
+        setLog("저장할 검이 아직 없습니다. 먼저 1강 이상 강화해보세요.", "fail");
+        return;
+      }
+      if (!Array.isArray(game.savedSwords)) game.savedSwords = [];
+      if (game.savedSwords.length >= 50) {
+        setLog("보관함이 가득 찼습니다. 저장한 검을 판매하거나 꺼내서 공간을 만들어주세요.", "fail");
+        return;
+      }
+
+      const savedLevel = game.level;
+      game.savedSwords.push({
+        level: savedLevel,
+        name: swordNames[savedLevel],
+        savedAt: Date.now()
+      });
+      game.level = 0;
+      setLog(`+${savedLevel} ${swordNames[savedLevel]}을(를) 보관함에 저장했습니다. 새 검으로 다시 도전할 수 있어요 📦`, "success");
+      updateUI();
+    }
+
+    function equipSavedSword(index) {
+      if (!Array.isArray(game.savedSwords)) game.savedSwords = [];
+      const item = game.savedSwords[index];
+      if (!item) return;
+
+      if (game.level > 0) {
+        const ok = confirm(`현재 강화 중인 +${game.level} ${swordNames[game.level]}도 보관함에 저장하고, +${item.level} ${swordNames[item.level]}을(를) 꺼낼까요?`);
+        if (!ok) return;
+        if (game.savedSwords.length >= 50) {
+          setLog("보관함이 가득 차서 현재 검을 저장할 수 없습니다.", "fail");
+          return;
+        }
+      }
+
+      const [picked] = game.savedSwords.splice(index, 1);
+      if (game.level > 0) {
+        game.savedSwords.push({
+          level: game.level,
+          name: swordNames[game.level],
+          savedAt: Date.now()
+        });
+      }
+      game.level = picked.level;
+      setLog(`보관함에서 +${picked.level} ${swordNames[picked.level]}을(를) 꺼냈습니다 ⚔️`, "notice");
+      updateUI();
+    }
+
+    function sellSavedSword(index) {
+      if (!Array.isArray(game.savedSwords)) game.savedSwords = [];
+      const item = game.savedSwords[index];
+      if (!item) return;
+
+      const price = getSellPriceForLevel(item.level);
+      const ok = confirm(`저장한 +${item.level} ${swordNames[item.level]}을(를) ${formatWon(price)}에 판매할까요?`);
+      if (!ok) return;
+
+      game.savedSwords.splice(index, 1);
+      game.money += price;
+      setLog(`저장한 +${item.level} ${swordNames[item.level]}을(를) ${formatWon(price)}에 판매했습니다.`, "notice");
+      updateUI();
+    }
+
     function sellSword() {
       if (game.level <= 0) {
         setLog("판매할 검이 아직 없습니다.", "fail");
@@ -1193,17 +1444,25 @@
       updateUI();
     }
 
-    function buyGuard() {
-      const cost = getGuardCost();
+    function buyGuard(amount) {
+      amount = Number(amount);
+      const cost = getGuardPrice(amount);
+      if (!cost || ![1, 10, 100, 500].includes(amount)) {
+        const msg = "구매 수량이 올바르지 않습니다.";
+        setLog(msg, "fail");
+        setShopLog(msg, "fail");
+        return;
+      }
+
       if (game.money < cost) {
-        const msg = `파괴방지권 구매 비용 ${formatWon(cost)}이 부족합니다.`;
+        const msg = `파괴방지권 ${amount}장 구매 비용 ${formatWon(cost)}이 부족합니다.`;
         setLog(msg, "fail");
         setShopLog(msg, "fail");
         return;
       }
       game.money -= cost;
-      game.guards += 1;
-      const msg = `파괴방지권 1장 구매 완료! 현재 파괴방지권: ${game.guards}장`;
+      game.guards += amount;
+      const msg = `파괴방지권 ${amount}장 구매 완료! 현재 파괴방지권: ${game.guards}장`;
       setLog(msg, "success");
       setShopLog(msg, "success");
       updateUI();
