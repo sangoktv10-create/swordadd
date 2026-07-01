@@ -6,1065 +6,1006 @@
   <title>검강화하기</title>
   <style>
     :root {
-      --red: #c40000;
+      --red: #d60000;
       --dark: #111;
-      --line: #222;
-      --soft: #f4f4f4;
-      --easy: #17a85b;
-      --normal: #2563eb;
-      --hard: #d12b2b;
+      --soft: #f5f5f5;
+      --line: #1f1f1f;
+      --gold: #ffcc33;
+      --blue: #3b82f6;
     }
 
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       min-height: 100vh;
-      background: #111;
-      font-family: "Arial", "Malgun Gothic", sans-serif;
-      color: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 12px;
+      background: #f3f3f3;
+      color: var(--dark);
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      overflow-x: hidden;
     }
 
-    .phone-frame {
-      width: min(100%, 960px);
-      min-height: 620px;
-      background: #fff;
-      border: 3px solid #111;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 14px 45px rgba(0,0,0,0.45);
-    }
-
-    .grain {
-      pointer-events: none;
-      position: absolute;
-      inset: 0;
-      opacity: .035;
-      background-image:
-        radial-gradient(circle at 10% 20%, #000 0 1px, transparent 1px),
-        radial-gradient(circle at 80% 70%, #000 0 1px, transparent 1px);
-      background-size: 18px 18px, 22px 22px;
-      z-index: 50;
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .screen {
-      min-height: 620px;
-      padding: 28px 34px 30px;
+      width: 100%;
+      min-height: 100vh;
       display: none;
-      position: relative;
+    }
+
+    .screen.active { display: block; }
+
+    .select-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
       background:
-        linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.98)),
-        radial-gradient(circle at 50% 40%, #ececec, #fff 55%);
+        radial-gradient(circle at 20% 15%, rgba(255,0,0,0.16), transparent 25%),
+        radial-gradient(circle at 80% 20%, rgba(59,130,246,0.16), transparent 25%),
+        linear-gradient(135deg, #ffffff 0%, #e9e9e9 100%);
     }
 
-    .screen.active {
-      display: block;
-    }
-
-    .start-title {
+    .select-card {
+      width: min(720px, 100%);
+      background: white;
+      border: 4px solid #111;
+      border-radius: 26px;
+      padding: 28px;
+      box-shadow: 10px 10px 0 rgba(0,0,0,0.15);
       text-align: center;
-      margin: 10px 0 4px;
-      font-size: clamp(42px, 7vw, 72px);
-      letter-spacing: -3px;
+    }
+
+    .select-title {
+      margin: 0;
+      font-size: clamp(36px, 8vw, 72px);
       color: var(--red);
-      text-shadow:
-        4px 4px 0 #111,
-        0 0 1px #111;
-      font-weight: 900;
+      -webkit-text-stroke: 2px #111;
+      text-shadow: 4px 4px 0 rgba(0,0,0,0.18);
+      letter-spacing: -3px;
+      line-height: 1;
     }
 
-    .subtitle {
-      text-align: center;
-      font-size: clamp(16px, 2vw, 22px);
+    .select-sub {
+      margin: 14px 0 22px;
+      font-size: 18px;
       font-weight: 800;
-      margin-bottom: 28px;
     }
 
-    .difficulty-wrap {
+    .difficulty-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin: 24px auto 20px;
-      max-width: 860px;
-    }
-
-    .difficulty-card {
-      min-height: 320px;
-      border: 4px solid #111;
-      border-radius: 18px;
-      background: #fff;
-      padding: 20px 16px;
-      cursor: pointer;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: transform .12s ease, box-shadow .12s ease;
-      box-shadow: 8px 8px 0 #111;
-    }
-
-    .difficulty-card:active {
-      transform: translate(4px, 4px);
-      box-shadow: 4px 4px 0 #111;
-    }
-
-    .difficulty-card.easy { border-color: var(--easy); }
-    .difficulty-card.normal { border-color: var(--normal); }
-    .difficulty-card.hard { border-color: var(--hard); }
-
-    .difficulty-card h2 {
-      margin: 0;
-      font-size: clamp(28px, 4vw, 42px);
-      font-weight: 900;
-    }
-
-    .difficulty-card.easy h2 { color: var(--easy); }
-    .difficulty-card.normal h2 { color: var(--normal); }
-    .difficulty-card.hard h2 { color: var(--hard); }
-
-    .card-sword {
-      width: 120px;
-      height: 120px;
-      margin: 6px auto;
-      filter: drop-shadow(4px 6px 0 rgba(0,0,0,.25));
-    }
-
-    .card-info {
-      font-size: 16px;
-      line-height: 1.6;
-      font-weight: 800;
-    }
-
-    .select-btn {
-      border: 3px solid #111;
-      background: #111;
-      color: #fff;
-      border-radius: 999px;
-      padding: 12px 16px;
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    .notice-box {
-      max-width: 780px;
-      margin: 26px auto 0;
-      padding: 14px 18px;
-      border: 3px solid #111;
-      border-radius: 14px;
-      background: #f8f8f8;
-      font-size: 15px;
-      line-height: 1.55;
-      font-weight: 700;
-    }
-
-    .top-nav {
-      position: relative;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      z-index: 5;
-    }
-
-    .link-btn {
-      border: 0;
-      background: transparent;
-      color: #111;
-      font-size: clamp(18px, 2.4vw, 28px);
-      font-weight: 900;
-      cursor: pointer;
-      padding: 4px 0;
-    }
-
-    .game-title {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      margin: 0;
-      font-size: clamp(38px, 6.2vw, 74px);
-      line-height: .95;
-      color: var(--red);
-      letter-spacing: -5px;
-      font-weight: 900;
-      text-shadow:
-        4px 4px 0 #111,
-        0 0 1px #111;
-      white-space: nowrap;
-    }
-
-    .mode-badge {
-      position: absolute;
-      top: 88px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 6px 16px;
-      border: 3px solid #111;
-      background: #fff;
-      border-radius: 999px;
-      font-size: 17px;
-      font-weight: 900;
-      z-index: 4;
-    }
-
-    .main-area {
-      position: relative;
-      min-height: 500px;
-      padding-top: 74px;
-    }
-
-    .left-info {
-      position: absolute;
-      top: 112px;
-      left: 30px;
-      z-index: 5;
-      font-size: clamp(20px, 3vw, 32px);
-      line-height: 1.25;
-      font-weight: 900;
-    }
-
-    .left-info .small {
-      font-size: clamp(16px, 2.4vw, 25px);
-    }
-
-    .center-stage {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding-top: 82px;
-      min-height: 365px;
-    }
-
-    .sword-wrap {
-      position: relative;
-      width: min(52vw, 360px);
-      height: min(52vw, 360px);
-      display: grid;
-      place-items: center;
-    }
-
-    .aura {
-      position: absolute;
-      width: 72%;
-      height: 72%;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,.95) 0 40%, rgba(0,0,0,.08) 42%, rgba(0,0,0,0) 64%);
-      transform: scale(.9);
-      opacity: .75;
-    }
-
-    .sword-img {
-      position: relative;
-      width: 86%;
-      height: 86%;
-      transform: rotate(-12deg);
-      filter: drop-shadow(8px 12px 0 rgba(0,0,0,.18));
-      transition: transform .18s ease;
-    }
-
-    .sword-img.pop {
-      transform: rotate(-12deg) scale(1.12);
-    }
-
-    .enhance-button {
-      position: absolute;
-      right: 70px;
-      top: 188px;
-      width: clamp(112px, 17vw, 170px);
-      height: clamp(112px, 17vw, 170px);
-      border-radius: 50%;
-      border: 6px solid #111;
-      background:
-        radial-gradient(circle at 50% 45%, #5e5e5e 0 18%, #333 19% 42%, #1b1b1b 43% 100%);
-      box-shadow: 0 8px 0 #000, inset 0 0 0 3px rgba(255,255,255,.08);
-      cursor: pointer;
-      color: white;
-      font-size: clamp(15px, 2vw, 23px);
-      font-weight: 900;
-      line-height: 1.2;
-      z-index: 8;
-    }
-
-    .enhance-button:active {
-      transform: translateY(7px);
-      box-shadow: 0 1px 0 #000;
-    }
-
-    .item-name {
-      text-align: center;
-      margin-top: -8px;
-      font-size: clamp(36px, 6vw, 68px);
-      font-weight: 900;
-      letter-spacing: -4px;
-    }
-
-    .rate-text {
-      text-align: center;
-      font-size: clamp(22px, 3.2vw, 36px);
-      font-weight: 900;
-      margin-top: 4px;
-    }
-
-    .bottom-row {
-      position: absolute;
-      bottom: 18px;
-      left: 28px;
-      right: 28px;
-      display: grid;
-      grid-template-columns: 1fr 1.3fr 1fr;
-      align-items: end;
-      gap: 10px;
-      font-weight: 900;
-    }
-
-    .ticket {
-      font-size: clamp(18px, 2.8vw, 30px);
-      line-height: 1.25;
-    }
-
-    .log-box {
-      align-self: center;
-      min-height: 48px;
-      padding: 10px 14px;
-      border: 3px solid #111;
-      background: #fff;
-      border-radius: 12px;
-      text-align: center;
-      font-size: clamp(14px, 1.9vw, 20px);
-      line-height: 1.35;
-      font-weight: 900;
-    }
-
-    .money {
-      text-align: right;
-      font-size: clamp(22px, 3.6vw, 40px);
-      line-height: 1.1;
-    }
-
-    .action-panel {
-      position: absolute;
-      left: 28px;
-      bottom: 98px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      z-index: 12;
-    }
-
-    .mini-btn {
-      border: 3px solid #111;
-      background: #fff;
-      border-radius: 999px;
-      padding: 9px 14px;
-      font-size: 15px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 3px 3px 0 #111;
-    }
-
-    .mini-btn:active {
-      transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0 #111;
-    }
-
-    .shop-panel,
-    .inventory-panel {
-      display: none;
-      position: absolute;
-      inset: 86px 30px 30px;
-      background: rgba(255,255,255,.96);
-      border: 4px solid #111;
-      border-radius: 18px;
-      z-index: 30;
-      padding: 22px;
-      box-shadow: 8px 8px 0 #111;
-      overflow-y: auto;
-    }
-
-    .shop-panel.active,
-    .inventory-panel.active {
-      display: block;
-    }
-
-    .panel-title {
-      font-size: 34px;
-      font-weight: 900;
-      margin: 0 0 16px;
-      color: var(--red);
-      text-shadow: 2px 2px 0 #111;
-    }
-
-    .panel-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
     }
 
-    .panel-card {
+    .difficulty-btn {
+      min-height: 138px;
       border: 3px solid #111;
-      border-radius: 14px;
-      padding: 14px;
-      background: #fafafa;
-      font-weight: 800;
-      line-height: 1.5;
-    }
-
-    .panel-card button {
-      margin-top: 10px;
-      width: 100%;
-      border: 3px solid #111;
-      border-radius: 999px;
-      padding: 10px;
-      background: #111;
-      color: #fff;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .close-panel {
-      position: absolute;
-      right: 18px;
-      top: 14px;
-      width: 42px;
-      height: 42px;
-      border: 3px solid #111;
+      border-radius: 20px;
+      color: #111;
       background: #fff;
-      border-radius: 50%;
-      font-size: 24px;
+      font-size: 28px;
+      font-weight: 1000;
+      box-shadow: 0 7px 0 #111;
+      transition: transform .12s, box-shadow .12s;
+    }
+
+    .difficulty-btn small {
+      display: block;
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 800;
+      opacity: .78;
+    }
+
+    .difficulty-btn.easy { background: linear-gradient(180deg, #d8ffe3, #9dffc0); }
+    .difficulty-btn.normal { background: linear-gradient(180deg, #fff4c2, #ffd86a); }
+    .difficulty-btn.hard { background: linear-gradient(180deg, #ffd8d8, #ff8d8d); }
+
+    .difficulty-btn:active {
+      transform: translateY(6px);
+      box-shadow: 0 1px 0 #111;
+    }
+
+    .game-wrap {
+      min-height: 100vh;
+      background: #fafafa;
+      position: relative;
+      padding-bottom: 24px;
+    }
+
+    .top-bar {
+      height: 64px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 8px 18px;
+      border-bottom: 3px solid #111;
+      background: linear-gradient(180deg, #ffffff, #e7e7e7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav-btn {
+      justify-self: start;
+      background: #111;
+      color: white;
+      border-radius: 999px;
+      padding: 10px 15px;
       font-weight: 900;
-      cursor: pointer;
+      font-size: 14px;
     }
 
-    .flash-success {
-      animation: successFlash .36s ease;
+    .shop-link {
+      width: auto;
+      justify-self: end;
+      font-size: clamp(18px, 4vw, 28px);
+      font-weight: 1000;
+      white-space: nowrap;
     }
 
-    .flash-fail {
-      animation: failShake .28s ease;
+    .title {
+      margin: 0;
+      color: var(--red);
+      -webkit-text-stroke: 1.7px #111;
+      text-shadow: 3px 3px 0 rgba(0,0,0,.18);
+      font-size: clamp(32px, 7vw, 58px);
+      letter-spacing: -4px;
+      line-height: 1;
+      white-space: nowrap;
     }
 
-    @keyframes successFlash {
-      0% { background: #fff; }
-      50% { background: #d9ffe5; }
-      100% { background: #fff; }
+    .main-grid {
+      width: min(1000px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 0;
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      gap: 16px;
+      align-items: center;
     }
 
-    @keyframes failShake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-8px); }
-      40% { transform: translateX(8px); }
+    .left-info, .right-info {
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .stat-box {
+      background: white;
+      border: 3px solid #111;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-weight: 1000;
+      font-size: clamp(18px, 3.8vw, 28px);
+      line-height: 1.35;
+      box-shadow: 5px 5px 0 rgba(0,0,0,.12);
+      word-break: keep-all;
+    }
+
+    .stat-box.small {
+      font-size: clamp(14px, 3.4vw, 20px);
+      font-weight: 900;
+    }
+
+    .stage-area {
+      text-align: center;
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .sword-name {
+      margin: 8px 0 4px;
+      font-size: clamp(35px, 8vw, 70px);
+      font-weight: 1000;
+      letter-spacing: -4px;
+      line-height: 1.05;
+    }
+
+    .sword-grade {
+      font-size: clamp(22px, 5vw, 36px);
+      font-weight: 1000;
+      margin-bottom: 2px;
+    }
+
+    .sword-art {
+      width: min(330px, 86vw);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 14px 16px rgba(0,0,0,.25));
+      transition: transform .25s ease, filter .25s ease;
+    }
+
+    .sword-art.pop {
+      transform: scale(1.12) rotate(-4deg);
+      filter: drop-shadow(0 0 24px rgba(255, 0, 0, .45));
+    }
+
+    .rate-text {
+      font-size: clamp(20px, 5vw, 32px);
+      font-weight: 1000;
+      margin-top: -6px;
+    }
+
+    .money-text {
+      position: relative;
+      margin-top: 10px;
+      font-size: clamp(24px, 5vw, 38px);
+      font-weight: 1000;
+    }
+
+    .upgrade-circle {
+      width: min(230px, 46vw);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 45%, #565656 0 22%, #303030 23% 63%, #121212 64% 100%);
+      border: 5px solid #000;
+      color: white;
+      font-size: clamp(22px, 5vw, 38px);
+      font-weight: 1000;
+      box-shadow: 0 12px 0 #000, inset 0 0 16px rgba(255,255,255,.14);
+      transition: transform .1s, box-shadow .1s;
+    }
+
+    .upgrade-circle:active {
+      transform: translateY(10px) scale(.98);
+      box-shadow: 0 2px 0 #000, inset 0 0 16px rgba(255,255,255,.14);
+    }
+
+    .sub-btn {
+      width: 100%;
+      background: white;
+      color: #111;
+      border: 3px solid #111;
+      border-radius: 16px;
+      padding: 13px;
+      font-size: 16px;
+      font-weight: 1000;
+      box-shadow: 4px 4px 0 rgba(0,0,0,.16);
+    }
+
+    .sub-btn:active { transform: translateY(3px); box-shadow: 1px 1px 0 rgba(0,0,0,.16); }
+    .sub-btn.danger { background: #ffe4e4; }
+    .sub-btn.gold { background: #fff3b5; }
+    .sub-btn.blue { background: #dbeafe; }
+
+    .top-bar .shop-link { width: auto; padding: 10px 15px; font-size: clamp(15px, 3.4vw, 20px); }
+
+    .log-box {
+      width: min(860px, calc(100% - 32px));
+      margin: 18px auto 0;
+      min-height: 62px;
+      border: 3px solid #111;
+      background: white;
+      border-radius: 18px;
+      padding: 14px 18px;
+      font-size: clamp(16px, 3.6vw, 22px);
+      font-weight: 900;
+      text-align: center;
+      box-shadow: 5px 5px 0 rgba(0,0,0,.12);
+    }
+
+    .success { color: #088a31; }
+    .fail { color: #d00000; }
+    .notice { color: #1d4ed8; }
+    .max { color: #b8860b; }
+
+    .list-panel {
+      width: min(860px, calc(100% - 32px));
+      margin: 16px auto 0;
+      background: white;
+      border: 3px solid #111;
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 5px 5px 0 rgba(0,0,0,.12);
+    }
+
+    .list-title {
+      font-size: 20px;
+      font-weight: 1000;
+      margin-bottom: 10px;
+    }
+
+    .sword-list {
+      max-height: 190px;
+      overflow: auto;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding-right: 6px;
+    }
+
+    .sword-item {
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 900;
+      background: #f7f7f7;
+      font-size: 14px;
+    }
+
+    .sword-item.active-level {
+      border-color: #d60000;
+      background: #fff0f0;
+      color: #d60000;
+    }
+
+
+
+    .shop-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(214,0,0,0.14), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(255,204,51,0.18), transparent 28%),
+        linear-gradient(135deg, #ffffff 0%, #eeeeee 100%);
+    }
+
+    .shop-card {
+      width: min(760px, 100%);
+      background: white;
+      border: 4px solid #111;
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 10px 10px 0 rgba(0,0,0,0.16);
+    }
+
+    .shop-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .shop-title {
+      margin: 0;
+      font-size: clamp(34px, 8vw, 62px);
+      color: var(--red);
+      -webkit-text-stroke: 1.8px #111;
+      text-shadow: 3px 3px 0 rgba(0,0,0,.16);
+      letter-spacing: -3px;
+      line-height: 1;
+    }
+
+    .shop-back {
+      background: #111;
+      color: white;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .shop-money {
+      border: 3px solid #111;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: clamp(20px, 5vw, 30px);
+      font-weight: 1000;
+      background: #fff3b5;
+      box-shadow: 5px 5px 0 rgba(0,0,0,.12);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .shop-items {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .shop-item-card {
+      border: 3px solid #111;
+      border-radius: 22px;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(180deg, #ffffff, #f6f6f6);
+      box-shadow: 6px 6px 0 rgba(0,0,0,.12);
+    }
+
+    .item-icon {
+      width: 76px;
+      height: 76px;
+      border: 3px solid #111;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      background: linear-gradient(180deg, #dbeafe, #93c5fd);
+      box-shadow: inset 0 0 12px rgba(255,255,255,.5);
+    }
+
+    .item-info h2 {
+      margin: 0 0 6px;
+      font-size: clamp(22px, 5vw, 34px);
+      letter-spacing: -1px;
+    }
+
+    .item-info p {
+      margin: 4px 0;
+      font-size: 15px;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    .buy-btn {
+      min-width: 128px;
+      background: linear-gradient(180deg, #ffeb7a, #ffb703);
+      border: 3px solid #111;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 18px;
+      font-weight: 1000;
+      color: #111;
+      box-shadow: 0 6px 0 #111;
+      white-space: nowrap;
+    }
+
+    .buy-btn:active {
+      transform: translateY(5px);
+      box-shadow: 0 1px 0 #111;
+    }
+
+    @media (max-width: 640px) {
+      .shop-head { align-items: flex-start; }
+      .shop-item-card { grid-template-columns: 1fr; text-align: center; }
+      .item-icon { margin: 0 auto; }
+      .buy-btn { width: 100%; }
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-7px); }
+      40% { transform: translateX(7px); }
       60% { transform: translateX(-5px); }
       80% { transform: translateX(5px); }
     }
 
+    .shake { animation: shake .28s ease; }
+
     @media (max-width: 760px) {
-      body { padding: 0; align-items: stretch; }
-      .phone-frame {
-        min-height: 100vh;
-        border: 0;
-        width: 100%;
-      }
-      .screen {
-        min-height: 100vh;
-        padding: 18px 16px 26px;
-      }
-      .difficulty-wrap {
+      .difficulty-grid { grid-template-columns: 1fr; }
+      .difficulty-btn { min-height: 94px; }
+      .top-bar { grid-template-columns: auto 1fr auto; height: auto; gap: 8px; }
+      .title { text-align: center; letter-spacing: -3px; }
+      .shop-link { font-size: 16px; }
+      .main-grid {
         grid-template-columns: 1fr;
-        gap: 14px;
+        padding-top: 16px;
       }
-      .difficulty-card {
-        min-height: 180px;
+      .left-info, .right-info {
         display: grid;
-        grid-template-columns: 110px 1fr;
-        text-align: left;
-        gap: 12px;
-        align-items: center;
+        grid-template-columns: 1fr 1fr;
       }
-      .difficulty-card h2 { grid-column: 2; }
-      .card-sword { grid-row: 1 / 4; width: 100px; height: 100px; }
-      .select-btn { grid-column: 2; }
-      .game-title {
-        top: 46px;
-        font-size: 42px;
-        letter-spacing: -3px;
+      .stage-area { min-height: 390px; order: 2; }
+      .right-info { order: 3; }
+      .left-info { order: 1; }
+      .upgrade-circle {
+        width: min(220px, 60vw);
+        margin: 0 auto;
       }
-      .mode-badge { top: 92px; }
-      .main-area { padding-top: 108px; }
-      .top-nav { align-items: center; }
-      .left-info {
-        position: relative;
-        top: 0;
-        left: 0;
-        font-size: 21px;
-        margin-top: 20px;
-      }
-      .center-stage {
-        padding-top: 0;
-        min-height: 280px;
-      }
-      .sword-wrap {
-        width: min(78vw, 300px);
-        height: min(78vw, 300px);
-      }
-      .enhance-button {
-        top: 310px;
-        right: 20px;
-        width: 112px;
-        height: 112px;
-        font-size: 16px;
-      }
-      .item-name {
-        margin-top: -12px;
-        font-size: 42px;
-        letter-spacing: -2px;
-      }
-      .rate-text { font-size: 25px; }
-      .bottom-row {
-        position: relative;
-        left: 0;
-        right: 0;
-        bottom: auto;
-        margin-top: 18px;
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-      .ticket, .money { text-align: center; }
-      .action-panel {
-        position: relative;
-        left: 0;
-        bottom: auto;
-        margin-top: 16px;
-        justify-content: center;
-      }
-      .shop-panel, .inventory-panel {
-        inset: 76px 14px 20px;
-      }
-      .panel-grid { grid-template-columns: 1fr; }
+      .right-info .stat-box { grid-column: 1 / -1; }
+      .sword-list { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="phone-frame" id="frame">
-    <div class="grain"></div>
-
-    <section class="screen active" id="startScreen">
-      <h1 class="start-title">검강화하기</h1>
-      <div class="subtitle">난이도를 고르면 다음 화면으로 넘어가서 게임이 시작돼!</div>
-
-      <div class="difficulty-wrap">
-        <article class="difficulty-card easy" onclick="selectDifficulty('easy')">
-          <h2>이지</h2>
-          <svg class="card-sword" viewBox="0 0 200 200" aria-hidden="true">
-            <defs>
-              <linearGradient id="easyBlade" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#ffffff" />
-                <stop offset=".45" stop-color="#c8fff0" />
-                <stop offset="1" stop-color="#11b66b" />
-              </linearGradient>
-            </defs>
-            <path d="M127 13 L154 40 L92 128 L72 108 Z" fill="url(#easyBlade)" stroke="#111" stroke-width="8" stroke-linejoin="round"/>
-            <path d="M70 108 L92 130" stroke="#111" stroke-width="16" stroke-linecap="round"/>
-            <rect x="44" y="111" width="72" height="25" rx="8" fill="#f7f7f7" stroke="#111" stroke-width="8" transform="rotate(45 80 123)"/>
-            <rect x="65" y="128" width="28" height="50" rx="8" fill="#fff" stroke="#111" stroke-width="8" transform="rotate(45 79 153)"/>
-          </svg>
-          <div class="card-info">성공률 높음<br>비용 낮음<br>실패 패널티 약함</div>
-          <div class="select-btn">이지로 시작</div>
-        </article>
-
-        <article class="difficulty-card normal" onclick="selectDifficulty('normal')">
-          <h2>노말</h2>
-          <svg class="card-sword" viewBox="0 0 200 200" aria-hidden="true">
-            <defs>
-              <linearGradient id="normalBlade" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#ffffff" />
-                <stop offset=".5" stop-color="#cbdcff" />
-                <stop offset="1" stop-color="#2563eb" />
-              </linearGradient>
-            </defs>
-            <path d="M127 13 L154 40 L92 128 L72 108 Z" fill="url(#normalBlade)" stroke="#111" stroke-width="8" stroke-linejoin="round"/>
-            <path d="M70 108 L92 130" stroke="#111" stroke-width="16" stroke-linecap="round"/>
-            <rect x="44" y="111" width="72" height="25" rx="8" fill="#f7f7f7" stroke="#111" stroke-width="8" transform="rotate(45 80 123)"/>
-            <rect x="65" y="128" width="28" height="50" rx="8" fill="#fff" stroke="#111" stroke-width="8" transform="rotate(45 79 153)"/>
-          </svg>
-          <div class="card-info">기본 밸런스<br>추천 난이도<br>강화 맛이 있음</div>
-          <div class="select-btn">노말로 시작</div>
-        </article>
-
-        <article class="difficulty-card hard" onclick="selectDifficulty('hard')">
-          <h2>하드</h2>
-          <svg class="card-sword" viewBox="0 0 200 200" aria-hidden="true">
-            <defs>
-              <linearGradient id="hardBlade" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#ffffff" />
-                <stop offset=".48" stop-color="#ffc4c4" />
-                <stop offset="1" stop-color="#d12b2b" />
-              </linearGradient>
-            </defs>
-            <path d="M127 13 L154 40 L92 128 L72 108 Z" fill="url(#hardBlade)" stroke="#111" stroke-width="8" stroke-linejoin="round"/>
-            <path d="M70 108 L92 130" stroke="#111" stroke-width="16" stroke-linecap="round"/>
-            <rect x="44" y="111" width="72" height="25" rx="8" fill="#f7f7f7" stroke="#111" stroke-width="8" transform="rotate(45 80 123)"/>
-            <rect x="65" y="128" width="28" height="50" rx="8" fill="#fff" stroke="#111" stroke-width="8" transform="rotate(45 79 153)"/>
-          </svg>
-          <div class="card-info">성공률 낮음<br>비용 높음<br>성공하면 더 짜릿함</div>
-          <div class="select-btn">하드로 시작</div>
-        </article>
-      </div>
-
-      <div class="notice-box">
-        최고 강화는 현재 <b>+50</b>으로 설정되어 있어. 나중에 코드 맨 위의 <b>MAX_LEVEL = 50</b>만 <b>100</b>으로 바꾸면 +100강 게임으로 확장 가능해.
-      </div>
-    </section>
-
-    <section class="screen" id="gameScreen">
-      <div class="top-nav">
-        <button class="link-btn" onclick="openInventory()">아이템창가기</button>
-        <h1 class="game-title">검강화하기</h1>
-        <button class="link-btn" onclick="openShop()">상점가기</button>
-      </div>
-
-      <div class="mode-badge" id="modeBadge">노말 모드</div>
-
-      <div class="main-area" id="mainArea">
-        <div class="left-info">
-          <div>강화비용:<span id="costText">500</span>원</div>
-          <div>판매가격:<span id="sellText">0</span>원</div>
-          <div class="small">공격력:<span id="powerText">10</span></div>
-        </div>
-
-        <div class="center-stage">
-          <div class="sword-wrap">
-            <div class="aura"></div>
-            <svg class="sword-img" id="swordImage" viewBox="0 0 260 260" aria-label="검 이미지">
-              <defs>
-                <linearGradient id="bladeGradient" x1="0" y1="0" x2="1" y2="1">
-                  <stop id="bladeStart" offset="0" stop-color="#ffffff" />
-                  <stop id="bladeMid" offset=".5" stop-color="#e8e8e8" />
-                  <stop id="bladeEnd" offset="1" stop-color="#9a9a9a" />
-                </linearGradient>
-                <linearGradient id="handleGradient" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#ffffff" />
-                  <stop offset="1" stop-color="#dcdcdc" />
-                </linearGradient>
-              </defs>
-              <path d="M173 18 L208 53 L116 174 L85 143 Z" fill="url(#bladeGradient)" stroke="#111" stroke-width="9" stroke-linejoin="round" />
-              <path d="M100 142 L121 163" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity=".75" />
-              <path d="M80 140 L119 179" stroke="#111" stroke-width="18" stroke-linecap="round" />
-              <rect x="50" y="143" width="104" height="34" rx="9" fill="url(#handleGradient)" stroke="#111" stroke-width="9" transform="rotate(45 102 160)" />
-              <rect x="82" y="171" width="40" height="68" rx="11" fill="url(#handleGradient)" stroke="#111" stroke-width="9" transform="rotate(45 102 205)" />
-              <circle cx="102" cy="238" r="14" fill="#fff" stroke="#111" stroke-width="8" />
-            </svg>
-          </div>
-        </div>
-
-        <button class="enhance-button" onclick="upgradeSword()">강화<br>하기</button>
-
-        <div class="item-name" id="itemName">+0 낡은 단검</div>
-        <div class="rate-text">성공률 <span id="rateText">100</span>%</div>
-
-        <div class="action-panel">
-          <button class="mini-btn" onclick="huntMonster()">몬스터 잡기</button>
-          <button class="mini-btn" onclick="sellSword()">검 판매</button>
-          <button class="mini-btn" onclick="goStart()">난이도 선택</button>
-          <button class="mini-btn" onclick="resetGame()">초기화</button>
-        </div>
-
-        <div class="bottom-row">
-          <div class="ticket">방지권:<span id="ticketText">0</span></div>
-          <div class="log-box" id="logBox">강화 버튼을 눌러 시작!</div>
-          <div class="money"><span id="moneyText">100000</span> 원</div>
+  <section id="selectScreen" class="screen active">
+    <div class="select-wrap">
+      <div class="select-card">
+        <h1 class="select-title">검강화하기</h1>
+        <p class="select-sub">난이도를 고르면 게임 화면으로 넘어가요 ⚔️<br>시작 돈: <b>이지 2,500,000원 / 노말 2,000,000원 / 하드 1,000,000원</b></p>
+        <div class="difficulty-grid">
+          <button class="difficulty-btn easy" onclick="startGame('easy')">이지<small>시작 돈 250만원<br>성공률 높음</small></button>
+          <button class="difficulty-btn normal" onclick="startGame('normal')">노말<small>시작 돈 200만원<br>기본 밸런스</small></button>
+          <button class="difficulty-btn hard" onclick="startGame('hard')">하드<small>시작 돈 100만원<br>성공률 낮음</small></button>
         </div>
       </div>
+    </div>
+  </section>
 
-      <aside class="shop-panel" id="shopPanel">
-        <button class="close-panel" onclick="closePanels()">×</button>
-        <h2 class="panel-title">상점</h2>
-        <div class="panel-grid">
-          <div class="panel-card">
-            <b>방지권 1개</b><br>
-            실패 시 강화 하락을 1번 막아줘.<br>
-            가격: <span id="ticketCostText">15000</span>원
-            <button onclick="buyTicket()">구매하기</button>
-          </div>
-          <div class="panel-card">
-            <b>골드 상자</b><br>
-            바로 50,000원을 얻어.<br>
-            무료 테스트용 버튼이야.
-            <button onclick="freeMoney()">받기</button>
-          </div>
-          <div class="panel-card">
-            <b>강화 목표</b><br>
-            현재 최고 목표는 +50강이야.<br>
-            나중에 MAX_LEVEL을 100으로 바꾸면 +100강까지 가능해.
-          </div>
-          <div class="panel-card">
-            <b>난이도 변경</b><br>
-            현재 진행 상황은 난이도별로 따로 저장돼.
-            <button onclick="goStart()">난이도 고르기</button>
+  <section id="gameScreen" class="screen">
+    <div class="game-wrap" id="gameWrap">
+      <header class="top-bar">
+        <button class="nav-btn" onclick="goSelect()">난이도</button>
+        <h1 class="title">검강화하기</h1>
+        <button class="shop-link sub-btn blue" onclick="openShop()">상점가기</button>
+      </header>
+
+      <main class="main-grid">
+        <section class="left-info">
+          <div class="stat-box">강화비용:<br><span id="costText">0원</span></div>
+          <div class="stat-box">판매가격:<br><span id="sellText">0원</span></div>
+          <div class="stat-box small">난이도: <span id="difficultyText">노말</span></div>
+          <div class="stat-box small">파괴방지권: <span id="guardText">0</span>장</div>
+        </section>
+
+        <section class="stage-area">
+          <div id="swordArt" class="sword-art"></div>
+          <div class="sword-grade" id="levelText">+0</div>
+          <div class="sword-name" id="nameText">강화 전 검</div>
+          <div class="rate-text">성공률 <span id="rateText">100</span>%</div>
+          <div class="money-text">내 돈: <span id="moneyText">0원</span></div>
+        </section>
+
+        <section class="right-info">
+          <button class="upgrade-circle" onclick="upgradeSword()">강화</button>
+          <button class="sub-btn gold" onclick="sellSword()">검 판매하기</button>
+          <button class="sub-btn blue" onclick="openShop()">상점가기</button>
+          <button class="sub-btn danger" onclick="resetCurrent()">현재 난이도 초기화</button>
+          <div class="stat-box small">다음 검:<br><span id="nextText">낡은 나무검</span></div>
+        </section>
+      </main>
+
+      <div id="logBox" class="log-box notice">강화 버튼을 눌러서 30강 무한의 검까지 도전해보자!</div>
+
+      <section class="list-panel">
+        <div class="list-title">⚔️ 강화 단계 목록</div>
+        <div id="swordList" class="sword-list"></div>
+      </section>
+    </div>
+  </section>
+
+
+  <section id="shopScreen" class="screen">
+    <div class="shop-wrap">
+      <div class="shop-card">
+        <div class="shop-head">
+          <h1 class="shop-title">상점</h1>
+          <button class="shop-back" onclick="closeShop()">게임으로 돌아가기</button>
+        </div>
+
+        <div class="shop-money">
+          내 돈: <span id="shopMoneyText">0원</span><br>
+          보유 파괴방지권: <span id="shopGuardText">0</span>장
+        </div>
+
+        <div class="shop-items">
+          <div class="shop-item-card">
+            <div class="item-icon">🛡️</div>
+            <div class="item-info">
+              <h2>파괴방지권</h2>
+              <p>강화 실패로 검이 하락할 때 자동으로 1장 사용되어 현재 강화 단계를 지켜줍니다.</p>
+              <p>가격: <b id="guardCostText">0원</b></p>
+            </div>
+            <button class="buy-btn" onclick="buyGuard()">구매</button>
           </div>
         </div>
-      </aside>
 
-      <aside class="inventory-panel" id="inventoryPanel">
-        <button class="close-panel" onclick="closePanels()">×</button>
-        <h2 class="panel-title">아이템창</h2>
-        <div class="panel-grid">
-          <div class="panel-card">
-            <b>현재 장착 검</b><br>
-            <span id="inventorySword">+0 낡은 단검</span><br>
-            공격력: <span id="inventoryPower">10</span>
-          </div>
-          <div class="panel-card">
-            <b>보유 재화</b><br>
-            돈: <span id="inventoryMoney">100000</span>원<br>
-            방지권: <span id="inventoryTicket">0</span>개
-          </div>
-          <div class="panel-card">
-            <b>현재 난이도</b><br>
-            <span id="inventoryMode">노말</span><br>
-            난이도에 따라 비용, 성공률, 실패 패널티가 달라져.
-          </div>
-          <div class="panel-card">
-            <b>저장 방식</b><br>
-            이 파일은 브라우저 localStorage에 자동 저장돼.
-          </div>
-        </div>
-      </aside>
-    </section>
-  </main>
+        <div id="shopLogBox" class="log-box notice">파괴방지권은 실패 시 강화 하락을 막아줍니다.</div>
+      </div>
+    </div>
+  </section>
 
   <script>
-    // 나중에 +100강으로 바꾸고 싶으면 여기 숫자만 100으로 변경하면 됨
-    const MAX_LEVEL = 50;
-
-    const difficultyData = {
-      easy: {
-        label: "이지",
-        startMoney: 150000,
-        costBase: 300,
-        costGrow: 115,
-        ticketCost: 12000,
-        failDownStart: 16,
-        hardFailStart: 999,
-        minRate: 18,
-        rate(level) {
-          return Math.max(this.minRate, Math.floor(100 - level * 1.45));
-        },
-        reward() {
-          return 9000 + Math.floor(Math.random() * 4500);
-        }
-      },
-      normal: {
-        label: "노말",
-        startMoney: 100000,
-        costBase: 500,
-        costGrow: 165,
-        ticketCost: 15000,
-        failDownStart: 11,
-        hardFailStart: 35,
-        minRate: 7,
-        rate(level) {
-          return Math.max(this.minRate, Math.floor(95 - level * 1.65));
-        },
-        reward() {
-          return 7000 + Math.floor(Math.random() * 3500);
-        }
-      },
-      hard: {
-        label: "하드",
-        startMoney: 80000,
-        costBase: 700,
-        costGrow: 230,
-        ticketCost: 22000,
-        failDownStart: 7,
-        hardFailStart: 26,
-        minRate: 3,
-        rate(level) {
-          return Math.max(this.minRate, Math.floor(85 - level * 1.8));
-        },
-        reward() {
-          return 8500 + Math.floor(Math.random() * 3500);
-        }
-      }
+    const MAX_LEVEL = 30;
+    const START_MONEY_BY_DIFFICULTY = {
+      easy: 2500000,
+      normal: 2000000,
+      hard: 1000000
     };
+    const STORAGE_PREFIX = "swordUpgradeV6_30ShopDestroyGuard_";
 
     const swordNames = [
-      "낡은 단검", "나무검", "청동검", "철검", "강철검", "은빛검",
-      "기사검", "용병검", "불꽃검", "번개검", "얼음검", "암흑검",
-      "빛의 검", "용사의 검", "왕국의 검", "전설의 검", "신화의 검",
-      "혈월검", "차원의 검", "공허검", "신의 검", "종말검", "창조자의 검"
+      "강화 전 검",
+      "낡은 나무검",
+      "단단한 나무검",
+      "훈련용 철검",
+      "초보 전사의 검",
+      "날카로운 철검",
+      "강철검",
+      "은빛 검",
+      "기사단의 검",
+      "전투의 검",
+      "용병왕의 검",
+      "붉은 화염검",
+      "푸른 서리검",
+      "번개의 검",
+      "독기의 검",
+      "그림자 검",
+      "빛의 검",
+      "암흑 기사검",
+      "용의 송곳니검",
+      "마력의 검",
+      "고대의 성검",
+      "혈월검",
+      "차원검",
+      "공허검",
+      "천공의 검",
+      "심판의 검",
+      "신성한 검",
+      "신의 검",
+      "종말검",
+      "창조자의 검",
+      "무한의 검"
     ];
 
-    const bladePalettes = [
-      ["#ffffff", "#e8e8e8", "#8c8c8c"],
-      ["#ffffff", "#d8f5ff", "#2b9cff"],
-      ["#ffffff", "#ffe2b8", "#d4832b"],
-      ["#ffffff", "#e6e6e6", "#555555"],
-      ["#ffffff", "#c8ffef", "#12aa72"],
-      ["#ffffff", "#ffe7a3", "#e0a118"],
-      ["#ffffff", "#ffc4c4", "#c40000"],
-      ["#ffffff", "#dfc8ff", "#7a2cff"],
-      ["#ffffff", "#a8f0ff", "#111111"],
-      ["#ffffff", "#ffd2f4", "#ff2bc2"]
+    const swordColors = [
+      ["#d8d8d8", "#8b8b8b", "#6b3f1d"],
+      ["#a87944", "#5a351a", "#3a2412"],
+      ["#c99755", "#77471f", "#4b2d14"],
+      ["#c7c7c7", "#6b7280", "#654321"],
+      ["#d1d5db", "#4b5563", "#8b5e34"],
+      ["#e5e7eb", "#374151", "#7c2d12"],
+      ["#f3f4f6", "#64748b", "#111827"],
+      ["#ffffff", "#94a3b8", "#0f172a"],
+      ["#e0f2fe", "#2563eb", "#1e3a8a"],
+      ["#fde68a", "#f97316", "#7c2d12"],
+      ["#fef3c7", "#b45309", "#3f2a11"],
+      ["#fecaca", "#dc2626", "#7f1d1d"],
+      ["#dbeafe", "#38bdf8", "#0c4a6e"],
+      ["#fef08a", "#f59e0b", "#713f12"],
+      ["#bbf7d0", "#16a34a", "#14532d"],
+      ["#d8b4fe", "#4c1d95", "#111827"],
+      ["#ffffff", "#facc15", "#854d0e"],
+      ["#9ca3af", "#111827", "#020617"],
+      ["#fed7aa", "#ea580c", "#7c2d12"],
+      ["#ddd6fe", "#7c3aed", "#2e1065"],
+      ["#fde68a", "#0ea5e9", "#92400e"],
+      ["#ff8fab", "#be123c", "#450a0a"],
+      ["#bfdbfe", "#7c3aed", "#1e1b4b"],
+      ["#c4b5fd", "#111827", "#020617"],
+      ["#e0f2fe", "#0284c7", "#075985"],
+      ["#fef08a", "#ef4444", "#7f1d1d"],
+      ["#ffffff", "#22c55e", "#064e3b"],
+      ["#fefce8", "#f59e0b", "#713f12"],
+      ["#fee2e2", "#991b1b", "#111827"],
+      ["#f0abfc", "#7e22ce", "#312e81"],
+      ["#ffffff", "#06b6d4", "#4c1d95"]
     ];
 
-    let currentMode = "normal";
-    let game = createNewGame("normal");
+    const diffConfig = {
+      easy: { label: "이지", rateBonus: 10, costMul: 0.75, sellMul: 0.9, downLevel: 18 },
+      normal: { label: "노말", rateBonus: 0, costMul: 1, sellMul: 1, downLevel: 12 },
+      hard: { label: "하드", rateBonus: -10, costMul: 1.2, sellMul: 1.25, downLevel: 8 }
+    };
 
-    function createNewGame(mode) {
+    let currentDifficulty = "normal";
+    let game = makeNewGame();
+
+    function makeNewGame() {
       return {
-        mode,
         level: 0,
-        money: difficultyData[mode].startMoney,
-        ticket: 0,
+        money: getStartMoney(),
+        guards: 0,
         best: 0
       };
     }
 
-    function storageKey(mode) {
-      return `swordUpgrade_${mode}_v2`;
+    function getStartMoney() {
+      return START_MONEY_BY_DIFFICULTY[currentDifficulty] ?? START_MONEY_BY_DIFFICULTY.normal;
+    }
+
+    function formatWon(value) {
+      return Math.floor(value).toLocaleString("ko-KR") + "원";
+    }
+
+    function getStorageKey() {
+      return STORAGE_PREFIX + currentDifficulty;
     }
 
     function saveGame() {
-      localStorage.setItem(storageKey(currentMode), JSON.stringify(game));
+      localStorage.setItem(getStorageKey(), JSON.stringify(game));
     }
 
-    function loadGame(mode) {
-      currentMode = mode;
-      const saved = localStorage.getItem(storageKey(mode));
-      if (saved) {
-        try {
-          game = JSON.parse(saved);
-          game.mode = mode;
-          if (typeof game.best !== "number") game.best = game.level || 0;
-        } catch (e) {
-          game = createNewGame(mode);
-        }
-      } else {
-        game = createNewGame(mode);
+    function loadGame() {
+      const saved = localStorage.getItem(getStorageKey());
+      if (!saved) {
+        game = makeNewGame();
+        saveGame();
+        return;
       }
-      updateUI();
+
+      try {
+        const parsed = JSON.parse(saved);
+        game = {
+          level: Number.isFinite(parsed.level) ? parsed.level : 0,
+          money: Number.isFinite(parsed.money) ? parsed.money : getStartMoney(),
+          guards: Number.isFinite(parsed.guards) ? parsed.guards : 0,
+          best: Number.isFinite(parsed.best) ? parsed.best : 0
+        };
+      } catch {
+        game = makeNewGame();
+      }
     }
 
-    function selectDifficulty(mode) {
-      loadGame(mode);
-      document.getElementById("startScreen").classList.remove("active");
-      document.getElementById("gameScreen").classList.add("active");
-      closePanels();
-      log(`${difficultyData[mode].label} 모드 시작! 강화 버튼을 눌러봐.`);
-    }
-
-    function goStart() {
-      saveGame();
-      document.getElementById("gameScreen").classList.remove("active");
-      document.getElementById("startScreen").classList.add("active");
-      closePanels();
-    }
-
-    function getData() {
-      return difficultyData[currentMode];
-    }
-
-    function getCost() {
-      const data = getData();
-      return data.costBase + game.level * data.costGrow + Math.floor(game.level * game.level * 24);
-    }
-
-    function getSellPrice() {
-      if (game.level <= 0) return 0;
-      return Math.floor(game.level * 850 + game.level * game.level * 180);
-    }
-
-    function getPower() {
-      return 10 + game.level * 9 + Math.floor(game.level * game.level * 1.8);
+    function getBaseRate(level) {
+      if (level <= 0) return 100;
+      if (level <= 3) return 95;
+      if (level <= 6) return 88;
+      if (level <= 9) return 78;
+      if (level <= 12) return 65;
+      if (level <= 15) return 52;
+      if (level <= 18) return 38;
+      if (level <= 21) return 27;
+      if (level <= 24) return 18;
+      if (level <= 27) return 10;
+      return 6;
     }
 
     function getRate() {
       if (game.level >= MAX_LEVEL) return 0;
-      return getData().rate(game.level);
+      const config = diffConfig[currentDifficulty];
+      return Math.max(3, Math.min(100, getBaseRate(game.level) + config.rateBonus));
     }
 
-    function getSwordName() {
-      const index = Math.min(swordNames.length - 1, Math.floor(game.level / 3));
-      return swordNames[index];
+    function getCost() {
+      if (game.level >= MAX_LEVEL) return 0;
+      const config = diffConfig[currentDifficulty];
+      const baseCost = 500 + game.level * 1200 + game.level * game.level * 60;
+      return Math.floor(baseCost * config.costMul);
     }
 
-    function format(num) {
-      return Number(num).toLocaleString("ko-KR");
+    function getSellPrice() {
+      if (game.level <= 0) return 0;
+      const config = diffConfig[currentDifficulty];
+      const basePrice = game.level * game.level * 2500 + game.level * 1500;
+      return Math.floor(basePrice * config.sellMul);
     }
 
-    function updateSwordColor() {
-      const p = bladePalettes[Math.min(bladePalettes.length - 1, Math.floor(game.level / 5))];
-      document.getElementById("bladeStart").setAttribute("stop-color", p[0]);
-      document.getElementById("bladeMid").setAttribute("stop-color", p[1]);
-      document.getElementById("bladeEnd").setAttribute("stop-color", p[2]);
+    function getGuardCost() {
+      return Math.floor((120000 + game.level * 6000) * diffConfig[currentDifficulty].costMul);
+    }
+
+    function startGame(diff) {
+      currentDifficulty = diff;
+      loadGame();
+      document.getElementById("selectScreen").classList.remove("active");
+      document.getElementById("gameScreen").classList.add("active");
+      setLog(`${diffConfig[diff].label} 난이도 시작! 시작 돈은 ${formatWon(getStartMoney())}입니다.`, "notice");
+      updateUI();
+    }
+
+    function goSelect() {
+      document.getElementById("gameScreen").classList.remove("active");
+      document.getElementById("selectScreen").classList.add("active");
+    }
+
+
+
+    function openShop() {
+      document.getElementById("gameScreen").classList.remove("active");
+      document.getElementById("shopScreen").classList.add("active");
+      updateShopUI();
+      setShopLog("파괴방지권은 실패 시 강화 하락을 막아줍니다.", "notice");
+    }
+
+    function closeShop() {
+      document.getElementById("shopScreen").classList.remove("active");
+      document.getElementById("gameScreen").classList.add("active");
+      updateUI();
+    }
+
+    function updateShopUI() {
+      document.getElementById("shopMoneyText").textContent = formatWon(game.money);
+      document.getElementById("shopGuardText").textContent = game.guards;
+      document.getElementById("guardCostText").textContent = formatWon(getGuardCost());
+    }
+
+    function renderSword(level) {
+      const safeLevel = Math.max(0, Math.min(MAX_LEVEL, level));
+      const [blade1, blade2, handle] = swordColors[safeLevel];
+      const glowOpacity = Math.min(0.15 + safeLevel * 0.025, 0.9);
+      const gemSize = 5 + Math.min(safeLevel, 30) * 0.22;
+      const aura = safeLevel >= 11;
+      const wings = safeLevel >= 20;
+      const crown = safeLevel >= 27;
+      const infinite = safeLevel >= 30;
+      const stars = safeLevel >= 16 ? `
+        <g opacity="0.9">
+          <path d="M70 68 L75 80 L88 82 L78 90 L81 103 L70 96 L59 103 L62 90 L52 82 L65 80 Z" fill="${blade2}" />
+          <path d="M258 72 L262 82 L273 84 L264 91 L267 102 L258 96 L249 102 L252 91 L243 84 L254 82 Z" fill="${blade2}" />
+          <circle cx="88" cy="242" r="5" fill="${blade1}" />
+          <circle cx="248" cy="238" r="5" fill="${blade1}" />
+        </g>` : "";
+
+      const wingShape = wings ? `
+        <g opacity="0.78">
+          <path d="M111 180 C65 158 51 121 43 92 C78 107 103 133 124 165 Z" fill="${blade2}" opacity="0.32"/>
+          <path d="M219 180 C265 158 279 121 287 92 C252 107 227 133 206 165 Z" fill="${blade2}" opacity="0.32"/>
+        </g>` : "";
+
+      const crownShape = crown ? `
+        <g transform="translate(132 18)">
+          <path d="M0 36 L8 7 L26 31 L42 0 L58 31 L76 7 L84 36 Z" fill="${blade2}" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="3" y="34" width="78" height="14" rx="5" fill="${blade1}" stroke="#111" stroke-width="4"/>
+        </g>` : "";
+
+      const infinityShape = infinite ? `
+        <g transform="translate(96 275)" opacity="0.95">
+          <path d="M16 18 C38 -4 58 -4 80 18 C102 40 122 40 144 18 C122 -4 102 -4 80 18 C58 40 38 40 16 18 Z" fill="none" stroke="${blade2}" stroke-width="10" stroke-linecap="round"/>
+        </g>` : "";
+
+      return `
+        <svg viewBox="0 0 330 330" width="100%" height="100%" aria-label="${swordNames[safeLevel]}">
+          <defs>
+            <linearGradient id="bladeGrad" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="${blade1}"/>
+              <stop offset="48%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="${blade2}"/>
+            </linearGradient>
+            <radialGradient id="auraGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="${blade1}" stop-opacity="${glowOpacity}"/>
+              <stop offset="65%" stop-color="${blade2}" stop-opacity="${glowOpacity * 0.55}"/>
+              <stop offset="100%" stop-color="${blade2}" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="165" cy="165" r="145" fill="url(#auraGrad)" opacity="${aura ? 1 : 0.5}"/>
+          ${wingShape}
+          ${crownShape}
+          ${stars}
+          <g transform="translate(165 165) rotate(42) translate(-165 -165)">
+            <path d="M158 36 C170 44 181 75 181 104 L177 196 L153 196 L149 104 C149 75 153 44 158 36 Z" fill="url(#bladeGrad)" stroke="#111" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M165 48 L166 188" stroke="rgba(255,255,255,.88)" stroke-width="4" stroke-linecap="round"/>
+            <rect x="111" y="190" width="108" height="24" rx="8" fill="${blade2}" stroke="#111" stroke-width="6"/>
+            <rect x="150" y="208" width="30" height="76" rx="11" fill="${handle}" stroke="#111" stroke-width="6"/>
+            <circle cx="165" cy="202" r="${gemSize}" fill="${blade1}" stroke="#111" stroke-width="4"/>
+            <path d="M143 285 L187 285 L176 309 L154 309 Z" fill="${blade2}" stroke="#111" stroke-width="6" stroke-linejoin="round"/>
+          </g>
+          ${infinityShape}
+        </svg>
+      `;
+    }
+
+    function updateSwordList() {
+      const list = document.getElementById("swordList");
+      list.innerHTML = "";
+      for (let i = 1; i <= MAX_LEVEL; i++) {
+        const div = document.createElement("div");
+        div.className = "sword-item" + (i === game.level ? " active-level" : "");
+        div.textContent = `${i}강 · ${swordNames[i]}`;
+        list.appendChild(div);
+      }
     }
 
     function updateUI() {
-      const data = getData();
-      const modeLabel = data.label;
-      const itemText = `+${game.level} ${getSwordName()}`;
-      document.getElementById("modeBadge").textContent = `${modeLabel} 모드`;
-      document.getElementById("itemName").textContent = itemText;
-      document.getElementById("rateText").textContent = getRate();
-      document.getElementById("costText").textContent = format(getCost());
-      document.getElementById("sellText").textContent = format(getSellPrice());
-      document.getElementById("powerText").textContent = format(getPower());
-      document.getElementById("ticketText").textContent = format(game.ticket);
-      document.getElementById("moneyText").textContent = format(game.money);
-      document.getElementById("ticketCostText").textContent = format(data.ticketCost);
+      const level = game.level;
+      game.best = Math.max(game.best, level);
 
-      document.getElementById("inventorySword").textContent = itemText;
-      document.getElementById("inventoryPower").textContent = format(getPower());
-      document.getElementById("inventoryMoney").textContent = format(game.money);
-      document.getElementById("inventoryTicket").textContent = format(game.ticket);
-      document.getElementById("inventoryMode").textContent = modeLabel;
-
-      updateSwordColor();
+      document.getElementById("costText").textContent = level >= MAX_LEVEL ? "최고강화" : formatWon(getCost());
+      document.getElementById("sellText").textContent = formatWon(getSellPrice());
+      document.getElementById("difficultyText").textContent = diffConfig[currentDifficulty].label;
+      document.getElementById("guardText").textContent = game.guards;
+      document.getElementById("levelText").textContent = `+${level}`;
+      document.getElementById("nameText").textContent = swordNames[level];
+      document.getElementById("rateText").textContent = level >= MAX_LEVEL ? "MAX" : getRate();
+      document.getElementById("moneyText").textContent = formatWon(game.money);
+      document.getElementById("nextText").textContent = level >= MAX_LEVEL ? "무한의 검 완성" : `${level + 1}강 ${swordNames[level + 1]}`;
+      document.getElementById("swordArt").innerHTML = renderSword(level);
+      updateSwordList();
+      if (document.getElementById("shopScreen").classList.contains("active")) updateShopUI();
       saveGame();
     }
 
-    function log(message) {
-      document.getElementById("logBox").textContent = message;
+    function setLog(message, type = "notice") {
+      const log = document.getElementById("logBox");
+      log.className = `log-box ${type}`;
+      log.textContent = message;
     }
 
-    function animateSword() {
-      const sword = document.getElementById("swordImage");
-      sword.classList.add("pop");
-      setTimeout(() => sword.classList.remove("pop"), 180);
+    function setShopLog(message, type = "notice") {
+      const log = document.getElementById("shopLogBox");
+      if (!log) return;
+      log.className = `log-box ${type}`;
+      log.textContent = message;
     }
 
-    function flash(type) {
-      const frame = document.getElementById("frame");
-      frame.classList.remove("flash-success", "flash-fail");
-      void frame.offsetWidth;
-      frame.classList.add(type === "success" ? "flash-success" : "flash-fail");
+    function animateSword(success) {
+      const sword = document.getElementById("swordArt");
+      const wrap = document.getElementById("gameWrap");
+      sword.classList.remove("pop");
+      wrap.classList.remove("shake");
+      void sword.offsetWidth;
+
+      if (success) {
+        sword.classList.add("pop");
+        setTimeout(() => sword.classList.remove("pop"), 260);
+      } else {
+        wrap.classList.add("shake");
+        setTimeout(() => wrap.classList.remove("shake"), 300);
+      }
     }
 
     function upgradeSword() {
       if (game.level >= MAX_LEVEL) {
-        log(`이미 최고 강화 +${MAX_LEVEL}강이야!`);
+        setLog("이미 30강 무한의 검입니다! 최고 강화 완료 👑", "max");
         return;
       }
 
       const cost = getCost();
       if (game.money < cost) {
-        log("돈이 부족해! 몬스터를 잡거나 상점에서 골드 상자를 받아봐.");
-        flash("fail");
+        setLog("돈이 부족합니다. 검을 판매하거나 현재 난이도를 초기화할 수 있어요.", "fail");
         return;
       }
 
       game.money -= cost;
       const rate = getRate();
       const roll = Math.random() * 100;
-      animateSword();
 
       if (roll <= rate) {
         game.level += 1;
-        game.best = Math.max(game.best, game.level);
-        log(`강화 성공! +${game.level} ${getSwordName()} 달성!`);
-        flash("success");
+        setLog(`강화 성공! +${game.level} ${swordNames[game.level]} 달성 ⚔️`, "success");
+        animateSword(true);
       } else {
-        const data = getData();
-        let down = 0;
-        if (game.level >= data.hardFailStart) down = 2;
-        else if (game.level >= data.failDownStart) down = 1;
-
-        if (down > 0) {
-          if (game.ticket > 0) {
-            game.ticket -= 1;
-            log(`강화 실패... 방지권이 하락을 막아줬어!`);
+        const downStart = diffConfig[currentDifficulty].downLevel;
+        if (game.level >= downStart) {
+          if (game.guards > 0) {
+            game.guards -= 1;
+            setLog("강화 실패! 파괴방지권 1장을 사용해서 강화 단계가 유지됐습니다.", "fail");
           } else {
-            const before = game.level;
-            game.level = Math.max(0, game.level - down);
-            log(`강화 실패... +${before}에서 +${game.level}로 하락했어.`);
+            game.level -= 1;
+            setLog(`강화 실패... +${game.level} ${swordNames[game.level]}로 하락했습니다.`, "fail");
           }
         } else {
-          log("강화 실패... 하지만 단계는 유지됐어.");
+          setLog("강화 실패... 하지만 강화 단계는 유지됐습니다.", "fail");
         }
-        flash("fail");
+        animateSword(false);
       }
 
-      updateUI();
-    }
-
-    function huntMonster() {
-      const reward = getData().reward();
-      game.money += reward;
-      log(`몬스터를 잡고 ${format(reward)}원을 얻었어!`);
-      flash("success");
       updateUI();
     }
 
     function sellSword() {
-      const price = getSellPrice();
       if (game.level <= 0) {
-        log("+0 검은 판매가격이 0원이야.");
+        setLog("판매할 검이 아직 없습니다.", "fail");
         return;
       }
-      const ok = confirm(`현재 검을 ${format(price)}원에 판매하고 +0으로 돌아갈까?`);
-      if (!ok) return;
+      const price = getSellPrice();
+      const soldName = swordNames[game.level];
       game.money += price;
       game.level = 0;
-      log(`검을 판매해서 ${format(price)}원을 얻었어.`);
+      setLog(`${soldName}을(를) ${formatWon(price)}에 판매했습니다. 다시 1강부터 시작합니다.`, "notice");
       updateUI();
     }
 
-    function buyTicket() {
-      const cost = getData().ticketCost;
+    function buyGuard() {
+      const cost = getGuardCost();
       if (game.money < cost) {
-        log("방지권을 살 돈이 부족해.");
-        flash("fail");
+        const msg = `파괴방지권 구매 비용 ${formatWon(cost)}이 부족합니다.`;
+        setLog(msg, "fail");
+        setShopLog(msg, "fail");
         return;
       }
       game.money -= cost;
-      game.ticket += 1;
-      log("방지권 1개 구매 완료!");
-      flash("success");
+      game.guards += 1;
+      const msg = `파괴방지권 1장 구매 완료! 현재 파괴방지권: ${game.guards}장`;
+      setLog(msg, "success");
+      setShopLog(msg, "success");
       updateUI();
     }
 
-    function freeMoney() {
-      game.money += 50000;
-      log("골드 상자에서 50,000원을 얻었어!");
-      flash("success");
-      updateUI();
-    }
-
-    function resetGame() {
-      const ok = confirm(`${getData().label} 모드 데이터를 초기화할까?`);
+    function resetCurrent() {
+      const ok = confirm(`${diffConfig[currentDifficulty].label} 난이도 데이터를 초기화할까요? 시작 돈 ${formatWon(getStartMoney())}으로 돌아갑니다.`);
       if (!ok) return;
-      game = createNewGame(currentMode);
-      log("현재 난이도 데이터가 초기화됐어.");
+      game = makeNewGame();
+      setLog(`${diffConfig[currentDifficulty].label} 난이도가 초기화됐습니다. 시작 돈 ${formatWon(getStartMoney())}!`, "notice");
       updateUI();
     }
-
-    function openShop() {
-      document.getElementById("inventoryPanel").classList.remove("active");
-      document.getElementById("shopPanel").classList.add("active");
-    }
-
-    function openInventory() {
-      document.getElementById("shopPanel").classList.remove("active");
-      document.getElementById("inventoryPanel").classList.add("active");
-      updateUI();
-    }
-
-    function closePanels() {
-      document.getElementById("shopPanel").classList.remove("active");
-      document.getElementById("inventoryPanel").classList.remove("active");
-    }
-
-    loadGame("normal");
   </script>
 </body>
 </html>
