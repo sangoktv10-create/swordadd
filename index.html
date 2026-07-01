@@ -284,6 +284,8 @@
     .sub-btn.danger { background: #ffe4e4; }
     .sub-btn.gold { background: #fff3b5; }
     .sub-btn.blue { background: #dbeafe; }
+    .sub-btn.green { background: #dcfce7; }
+    .sub-btn:disabled { opacity: .55; cursor: not-allowed; }
 
     .top-bar .shop-link { width: auto; padding: 10px 15px; font-size: clamp(15px, 3.4vw, 20px); }
 
@@ -305,6 +307,25 @@
     .fail { color: #d00000; }
     .notice { color: #1d4ed8; }
     .max { color: #b8860b; }
+
+    .pattern-meter {
+      width: 100%;
+      height: 12px;
+      margin-top: 8px;
+      border: 2px solid #111;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .pattern-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #60a5fa, #22c55e, #facc15);
+      transition: width .2s ease;
+    }
+
+    .pattern-ready { color: #d60000; }
 
     .list-panel {
       width: min(860px, calc(100% - 32px));
@@ -519,7 +540,7 @@
     <div class="select-wrap">
       <div class="select-card">
         <h1 class="select-title">검강화하기</h1>
-        <p class="select-sub">난이도를 고르면 게임 화면으로 넘어가요 ⚔️<br>시작 돈: <b>이지 2,500,000원 / 노말 2,000,000원 / 하드 1,000,000원</b></p>
+        <p class="select-sub">난이도를 고르면 게임 화면으로 넘어가요 ⚔️<br>시작 돈: <b>이지 2,500,000원 / 노말 2,000,000원 / 하드 1,000,000원</b><br>실패하거나 연마하면 <b>패턴 게이지</b>가 차고, 가득 차면 다음 강화가 확정 성공!<br><b>패턴 시스템은 20강까지만 적용</b>되고 21강부터는 적용되지 않아요.</p>
         <div class="difficulty-grid">
           <button class="difficulty-btn easy" onclick="startGame('easy')">이지<small>시작 돈 250만원<br>20강쯤 본전</small></button>
           <button class="difficulty-btn normal" onclick="startGame('normal')">노말<small>시작 돈 200만원<br>20강쯤 본전</small></button>
@@ -543,6 +564,11 @@
           <div class="stat-box">판매가격:<br><span id="sellText">0원</span></div>
           <div class="stat-box small">난이도: <span id="difficultyText">노말</span></div>
           <div class="stat-box small">파괴방지권: <span id="guardText">0</span>장</div>
+          <div class="stat-box small">패턴 분석:<br><span id="patternText">0/0</span>
+            <div class="pattern-meter"><div id="patternFill" class="pattern-fill"></div></div>
+            <span id="patternReadyText">대기중</span>
+          </div>
+          <div class="stat-box small">연마비용:<br><span id="grindCostText">0원</span></div>
         </section>
 
         <section class="stage-area">
@@ -555,6 +581,7 @@
 
         <section class="right-info">
           <button class="upgrade-circle" onclick="upgradeSword()">강화</button>
+          <button id="grindBtn" class="sub-btn green" onclick="grindPattern()">패턴 연마하기</button>
           <button class="sub-btn gold" onclick="sellSword()">검 판매하기</button>
           <button class="sub-btn blue" onclick="openShop()">상점가기</button>
           <button class="sub-btn danger" onclick="resetCurrent()">현재 난이도 초기화</button>
@@ -604,12 +631,13 @@
 
   <script>
     const MAX_LEVEL = 30;
+    const PATTERN_MAX_TARGET_LEVEL = 20; // 패턴 확정 강화는 20강 도전까지만 적용됩니다. 21강부터는 모든 난이도에서 비활성화됩니다.
     const START_MONEY_BY_DIFFICULTY = {
       easy: 2500000,
       normal: 2000000,
       hard: 1000000
     };
-    const STORAGE_PREFIX = "swordUpgradeV8_highCostAfter20_";
+    const STORAGE_PREFIX = "swordUpgradeV10_patternUntil20_";
 
     const swordNames = [
       "강화 전 검",
@@ -695,7 +723,8 @@
         level: 0,
         money: getStartMoney(),
         guards: 0,
-        best: 0
+        best: 0,
+        patterns: {}
       };
     }
 
@@ -709,6 +738,59 @@
 
     function getStorageKey() {
       return STORAGE_PREFIX + currentDifficulty;
+    }
+
+    function sanitizePatterns(patterns) {
+      const result = {};
+      if (!patterns || typeof patterns !== "object") return result;
+      for (let i = 1; i <= PATTERN_MAX_TARGET_LEVEL; i++) {
+        const value = Number(patterns[i]);
+        if (Number.isFinite(value) && value > 0) {
+          result[i] = Math.floor(value);
+        }
+      }
+      return result;
+    }
+
+    function getTargetLevel() {
+      return Math.min(MAX_LEVEL, game.level + 1);
+    }
+
+    function isPatternAvailable(targetLevel = getTargetLevel()) {
+      // 1강~20강 도전까지만 패턴 시스템 적용.
+      // 21강부터는 이지/노말/하드 모두 패턴 확정 강화가 사라집니다.
+      return targetLevel >= 1 && targetLevel <= PATTERN_MAX_TARGET_LEVEL;
+    }
+
+    function getPatternNeed(targetLevel = getTargetLevel()) {
+      if (!isPatternAvailable(targetLevel)) return 0;
+      const base = { easy: 3, normal: 5, hard: 7 }[currentDifficulty] ?? 5;
+      const growth = { easy: 6, normal: 5, hard: 4 }[currentDifficulty] ?? 5;
+      return base + Math.ceil(targetLevel / growth);
+    }
+
+    function getPatternProgress(targetLevel = getTargetLevel()) {
+      if (!isPatternAvailable(targetLevel)) return 0;
+      if (!game.patterns || typeof game.patterns !== "object") game.patterns = {};
+      return Math.min(game.patterns[targetLevel] || 0, getPatternNeed(targetLevel));
+    }
+
+    function addPatternProgress(targetLevel, amount) {
+      if (!isPatternAvailable(targetLevel)) return 0;
+      if (!game.patterns || typeof game.patterns !== "object") game.patterns = {};
+      const next = Math.min(getPatternNeed(targetLevel), (game.patterns[targetLevel] || 0) + amount);
+      game.patterns[targetLevel] = next;
+      return next;
+    }
+
+    function isPatternReady(targetLevel = getTargetLevel()) {
+      return isPatternAvailable(targetLevel) && getPatternProgress(targetLevel) >= getPatternNeed(targetLevel);
+    }
+
+    function getGrindCost() {
+      const targetLevel = getTargetLevel();
+      if (game.level >= MAX_LEVEL || !isPatternAvailable(targetLevel)) return 0;
+      return Math.max(1000, Math.floor(getCost() * 0.03));
     }
 
     function saveGame() {
@@ -729,7 +811,8 @@
           level: Number.isFinite(parsed.level) ? parsed.level : 0,
           money: Number.isFinite(parsed.money) ? parsed.money : getStartMoney(),
           guards: Number.isFinite(parsed.guards) ? parsed.guards : 0,
-          best: Number.isFinite(parsed.best) ? parsed.best : 0
+          best: Number.isFinite(parsed.best) ? parsed.best : 0,
+          patterns: sanitizePatterns(parsed.patterns)
         };
       } catch {
         game = makeNewGame();
@@ -810,7 +893,7 @@
       loadGame();
       document.getElementById("selectScreen").classList.remove("active");
       document.getElementById("gameScreen").classList.add("active");
-      setLog(`${diffConfig[diff].label} 난이도 시작! 시작 돈은 ${formatWon(getStartMoney())}입니다.`, "notice");
+      setLog(`${diffConfig[diff].label} 난이도 시작! 패턴 시스템은 20강 도전까지만 적용되고, 21강부터는 모든 난이도에서 사라져요.`, "notice");
       updateUI();
     }
 
@@ -930,6 +1013,38 @@
       document.getElementById("moneyText").textContent = formatWon(game.money);
       document.getElementById("nextText").textContent = level >= MAX_LEVEL ? "무한의 검 완성" : `${level + 1}강 ${swordNames[level + 1]}`;
       document.getElementById("swordArt").innerHTML = renderSword(level);
+
+      const targetLevel = getTargetLevel();
+      const patternAvailable = level < MAX_LEVEL && isPatternAvailable(targetLevel);
+      const progress = patternAvailable ? getPatternProgress(targetLevel) : 0;
+      const need = patternAvailable ? getPatternNeed(targetLevel) : 0;
+      const percent = patternAvailable && need > 0 ? Math.floor((progress / need) * 100) : 0;
+
+      if (level >= MAX_LEVEL) {
+        document.getElementById("patternText").textContent = "완성";
+        document.getElementById("patternFill").style.width = "100%";
+        document.getElementById("patternReadyText").textContent = "최고 강화";
+        document.getElementById("grindCostText").textContent = "완료";
+        document.getElementById("grindBtn").textContent = "패턴 연마하기";
+        document.getElementById("grindBtn").disabled = true;
+      } else if (!patternAvailable) {
+        document.getElementById("patternText").textContent = "20강 이후 없음";
+        document.getElementById("patternFill").style.width = "0%";
+        document.getElementById("patternReadyText").textContent = "21강부터 패턴 적용 안 됨";
+        document.getElementById("patternReadyText").className = "";
+        document.getElementById("grindCostText").textContent = "불가";
+        document.getElementById("grindBtn").textContent = "20강 이후 패턴 없음";
+        document.getElementById("grindBtn").disabled = true;
+      } else {
+        document.getElementById("patternText").textContent = `${progress}/${need}회 (${percent}%)`;
+        document.getElementById("patternFill").style.width = `${percent}%`;
+        document.getElementById("patternReadyText").textContent = progress >= need ? "다음 강화 확정!" : `${targetLevel}강 패턴 수집중`;
+        document.getElementById("patternReadyText").className = progress >= need ? "pattern-ready" : "";
+        document.getElementById("grindCostText").textContent = formatWon(getGrindCost());
+        document.getElementById("grindBtn").textContent = "패턴 연마하기";
+        document.getElementById("grindBtn").disabled = false;
+      }
+
       updateSwordList();
       if (document.getElementById("shopScreen").classList.contains("active")) updateShopUI();
       saveGame();
@@ -977,6 +1092,18 @@
       }
 
       game.money -= cost;
+      const targetLevel = game.level + 1;
+      const targetName = swordNames[targetLevel];
+
+      if (isPatternReady(targetLevel)) {
+        game.patterns[targetLevel] = 0;
+        game.level += 1;
+        setLog(`패턴 돌파! ${targetLevel}강 ${targetName} 강화가 확정 성공했습니다 🧩⚔️`, "success");
+        animateSword(true);
+        updateUI();
+        return;
+      }
+
       const rate = getRate();
       const roll = Math.random() * 100;
 
@@ -985,18 +1112,63 @@
         setLog(`강화 성공! +${game.level} ${swordNames[game.level]} 달성 ⚔️`, "success");
         animateSword(true);
       } else {
+        let patternMsg = "";
+        if (isPatternAvailable(targetLevel)) {
+          const progress = addPatternProgress(targetLevel, 2);
+          const need = getPatternNeed(targetLevel);
+          patternMsg = progress >= need
+            ? ` ${targetLevel}강 패턴 분석 완료! 다음 ${targetLevel}강 도전은 확정 성공입니다.`
+            : ` ${targetLevel}강 패턴 +2 (${progress}/${need}).`;
+        }
+
         if (game.guards > 0) {
           game.guards -= 1;
-          setLog("강화 실패! 파괴방지권 1장을 사용해서 0강 초기화를 막았습니다.", "fail");
+          setLog(`강화 실패! 파괴방지권 1장을 사용해서 0강 초기화를 막았습니다.${patternMsg}`, "fail");
         } else {
           const beforeName = swordNames[game.level];
           const beforeLevel = game.level;
           game.level = 0;
-          setLog(`강화 실패... +${beforeLevel} ${beforeName}이(가) 파괴되어 0강으로 완전히 초기화됐습니다.`, "fail");
+          setLog(`강화 실패... +${beforeLevel} ${beforeName}이(가) 파괴되어 0강으로 초기화됐습니다.${patternMsg}`, "fail");
         }
         animateSword(false);
       }
 
+      updateUI();
+    }
+
+    function grindPattern() {
+      if (game.level >= MAX_LEVEL) {
+        setLog("이미 최고 강화라서 더 이상 패턴 연마가 필요 없습니다.", "max");
+        return;
+      }
+
+      const targetLevel = getTargetLevel();
+      if (!isPatternAvailable(targetLevel)) {
+        setLog("패턴 시스템은 20강 도전까지만 적용됩니다. 21강부터는 이지/노말/하드 모두 패턴 연마가 불가능합니다.", "fail");
+        return;
+      }
+
+      const cost = getGrindCost();
+      if (game.money < cost) {
+        setLog(`패턴 연마 비용 ${formatWon(cost)}이 부족합니다.`, "fail");
+        return;
+      }
+
+      const need = getPatternNeed(targetLevel);
+      const current = getPatternProgress(targetLevel);
+
+      if (current >= need) {
+        setLog(`${targetLevel}강 패턴 분석이 이미 완료됐습니다. 이제 강화하면 확정 성공입니다!`, "success");
+        return;
+      }
+
+      game.money -= cost;
+      const progress = addPatternProgress(targetLevel, 1);
+      if (progress >= need) {
+        setLog(`패턴 연마 완료! 다음 ${targetLevel}강 ${swordNames[targetLevel]} 강화는 확정 성공입니다 🧩`, "success");
+      } else {
+        setLog(`패턴 연마 중... ${targetLevel}강 패턴 ${progress}/${need}회 분석 완료.`, "notice");
+      }
       updateUI();
     }
 
