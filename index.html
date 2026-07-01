@@ -540,7 +540,7 @@
     <div class="select-wrap">
       <div class="select-card">
         <h1 class="select-title">검강화하기</h1>
-        <p class="select-sub">난이도를 고르면 게임 화면으로 넘어가요 ⚔️<br>시작 돈: <b>이지 2,500,000원 / 노말 2,000,000원 / 하드 1,000,000원</b><br>실패하거나 연마하면 <b>패턴 게이지</b>가 차고, 가득 차면 다음 강화가 확정 성공!<br><b>패턴 시스템은 20강까지만 적용</b>되고 21강부터는 적용되지 않아요.</p>
+        <p class="select-sub">난이도를 고르면 게임 화면으로 넘어가요 ⚔️<br>시작 돈: <b>이지 2,500,000원 / 노말 2,000,000원 / 하드 1,000,000원</b><br>실패하거나 연마하면 <b>패턴 게이지</b>가 차고, 가득 차면 다음 강화가 확정 성공!<br><b>패턴 시스템은 20강까지만 적용</b>되고 21강부터는 적용되지 않아요.<br>패턴 연마 비용은 강화 단계가 높아질수록 더 비싸져요.</p>
         <div class="difficulty-grid">
           <button class="difficulty-btn easy" onclick="startGame('easy')">이지<small>시작 돈 250만원<br>20강쯤 본전</small></button>
           <button class="difficulty-btn normal" onclick="startGame('normal')">노말<small>시작 돈 200만원<br>20강쯤 본전</small></button>
@@ -790,7 +790,15 @@
     function getGrindCost() {
       const targetLevel = getTargetLevel();
       if (game.level >= MAX_LEVEL || !isPatternAvailable(targetLevel)) return 0;
-      return Math.max(1000, Math.floor(getCost() * 0.03));
+
+      // 패턴 연마 비용은 목표 강화 단계가 올라갈수록 크게 증가합니다.
+      // 노말 기준 예시: 1강 약 5천원 / 10강 약 25만원 / 15강 약 62만원 / 20강 약 145만원
+      // 난이도 배율도 같이 적용: 이지 75% / 노말 100% / 하드 120%
+      const baseGrindCost = 3000
+        + targetLevel * targetLevel * 2500
+        + Math.pow(Math.max(0, targetLevel - 10), 3) * 450;
+
+      return Math.floor(baseGrindCost * diffConfig[currentDifficulty].costMul);
     }
 
     function saveGame() {
